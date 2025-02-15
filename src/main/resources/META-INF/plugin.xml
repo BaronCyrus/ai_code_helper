@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.baroncyrus.aicodehelper</id>
-    <name>ai_code_helper</name>
+    <name>AICodeAssistant</name>
     <vendor>baroncyrus</vendor>
 
     <depends>com.intellij.modules.platform</depends>
@@ -15,4 +15,16 @@
     <applicationListeners>
         <listener class="com.github.baroncyrus.aicodehelper.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
     </applicationListeners>
+    <actions>
+        <group id="CodeAssistant.Group" text="CodeAssistant" description="AI辅助功能菜单" popup="true" icon="/icons/helpericon.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <!-- 子菜单项 -->
+            <action id="SelectFunction1" class="com.github.baroncyrus.aicodehelper.actions.SelectFunction1"
+                    text="SomeFunction1" description="Function1"/>
+            <action id="SelectFunction2" class="com.github.baroncyrus.aicodehelper.actions.SelectFunction2"
+                    text="SomeFunction1" description="Function2"/>
+            <action id="SelectFunction3" class="com.github.baroncyrus.aicodehelper.actions.SelectFunction3"
+                    text="SomeFunction3" description="Function3"/>
+        </group>
+    </actions>
 </idea-plugin>
