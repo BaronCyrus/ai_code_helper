@@ -24,6 +24,8 @@ public class PluginConfigPanel {
 
     private JButton configButton;
 
+    private JPanel clientPanel;
+
     public PluginConfigPanel() {
         initComponents();
         layoutComponents();
@@ -53,13 +55,13 @@ public class PluginConfigPanel {
         configButton.setToolTipText("Configure Module Settings");
 
         // 创建包含Stream支持状态的面板
-        mainPanel = new JPanel(new BorderLayout(5, 0));
-        mainPanel.add(clientNameField, BorderLayout.CENTER);
+        clientPanel = new JPanel(new BorderLayout(5, 0));
+        clientPanel.add(clientNameField, BorderLayout.CENTER);
 
         // 添加Stream状态标签
         JLabel streamLabel = new JLabel();
         streamLabel.setForeground(JBColor.GRAY);
-        mainPanel.add(streamLabel, BorderLayout.EAST);
+        clientPanel.add(streamLabel, BorderLayout.EAST);
 
 
         // 添加客户端选择监听器
@@ -97,8 +99,8 @@ public class PluginConfigPanel {
         // Reset gridwidth for subsequent components
         gbc.gridwidth = 1;
 
-        addComponent(new JBLabel("LLM client:"), gbc, 0, 1, 0.0);
-        addComponent(mainPanel, gbc, 1, 1, 1.0);
+        addComponent(new JBLabel("LLM Client:"), gbc, 0, 1, 0.0);
+        addComponent(clientPanel, gbc, 1, 1, 1.0);
 
         JPanel modulePanel = new JPanel(new BorderLayout(5, 0));
         modulePanel.add(modelComboBox, BorderLayout.CENTER);

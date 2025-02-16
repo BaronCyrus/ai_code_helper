@@ -56,7 +56,7 @@ public class Constants {
             put(Gemini, new ApiKeySettings.ModuleConfig("https://generativelanguage.googleapis.com/v1beta/models", ""));
             put(DeepSeek, new ApiKeySettings.ModuleConfig("https://api.deepseek.com/chat/completions", ""));
             put(Ollama, new ApiKeySettings.ModuleConfig("http://localhost:11434/api/generate", ""));
-            put(OpenAI_API, new ApiKeySettings.ModuleConfig("https://{host}/v1/chat/completions", ""));
+            put(OpenAI_API, new ApiKeySettings.ModuleConfig("https://api.openai.com/v1/chat/completions", ""));
             put(阿里云百炼, new ApiKeySettings.ModuleConfig("https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", ""));
             put(SiliconFlow, new ApiKeySettings.ModuleConfig("https://api.siliconflow.cn/v1/chat/completions", ""));
             put(CloudflareWorkersAI, new ApiKeySettings.ModuleConfig("https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions", ""));
