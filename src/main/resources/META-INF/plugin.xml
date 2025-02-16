@@ -11,6 +11,7 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="AICodeAssist" anchor="right" factoryClass="com.github.baroncyrus.aicodehelper.toolWindow.MyToolWindowFactory" icon="/icons/helpericon.svg"/>
         <projectConfigurable parentId="tools" instance="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" id="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" displayName="AI Code Assist"/>
+        <applicationService serviceImplementation="com.github.baroncyrus.aicodehelper.settings.ApiKeySettings"/>
     </extensions>
 
     <applicationListeners>
