@@ -46,14 +46,15 @@ public class SelectFunction1 extends AnAction {
             return;
         }
 
-        System.out.println("test point 1");
         // 显示工具窗口
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("AICodeAssist");
 
         if (toolWindow != null) {
             toolWindow.show(() -> {
-                Logger.getInstance(SelectFunction1.class).debug("检查代码");
-                MyToolWindowFactory.appendMessage("检查下面代码是否有BUG并给出修复建议\n" + selectedText, true);
+                MyToolWindowFactory.ChatWindow window = MyToolWindowFactory.ChatWindow.getInstance(project);
+                if (window != null) {
+                    window.addMessage("Me", "Explain Code: ```" + selectedText + "```", true);
+                }
             });
         }
     }
