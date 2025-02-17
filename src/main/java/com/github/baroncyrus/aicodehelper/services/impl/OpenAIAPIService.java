@@ -26,8 +26,8 @@ public class OpenAIAPIService implements AIService {
     }
 
     @Override
-    public void generateCommitMessageStream(String content, Consumer<String> onNext) throws Exception {
-        OpenAIUtil.getAIResponseStream(Constants.OpenAI_API, content, onNext);
+    public void generateCommitMessageStream(String content, Consumer<String> onNext,Consumer<String> onThinking,Consumer<Throwable> onError,Runnable finishCallBack) throws Exception {
+        OpenAIUtil.getAIResponseStream(Constants.OpenAI_API, content, onNext,onThinking,finishCallBack);
     }
 
     @Override

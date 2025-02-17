@@ -18,7 +18,7 @@ public interface AIService {
 
     String generateCommitMessage(String content) throws Exception;
 
-    void generateCommitMessageStream(String content, Consumer<String> onNext) throws Exception;
+    void generateCommitMessageStream(String content, Consumer<String> onContent,Consumer<String> onReasoning,Consumer<Throwable> onError,Runnable finishCallBack) throws Exception;
 
     boolean checkNecessaryModuleConfigIsRight();
 

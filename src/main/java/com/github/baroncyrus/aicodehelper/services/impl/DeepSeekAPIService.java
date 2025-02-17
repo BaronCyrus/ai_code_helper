@@ -18,8 +18,8 @@ public class DeepSeekAPIService implements AIService {
     }
 
     @Override
-    public void generateCommitMessageStream(String content, Consumer<String> onNext) throws Exception {
-        OpenAIUtil.getAIResponseStream(Constants.DeepSeek, content, onNext);
+    public void generateCommitMessageStream(String content, Consumer<String> onNext,Consumer<String> onThinking,Consumer<Throwable> onError,Runnable finishCallBack) throws Exception {
+        OpenAIUtil.getAIResponseStream(Constants.DeepSeek, content, onNext,onThinking,finishCallBack);
     }
 
     @Override

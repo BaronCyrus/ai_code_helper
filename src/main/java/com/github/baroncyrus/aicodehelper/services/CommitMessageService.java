@@ -28,10 +28,10 @@ public class CommitMessageService {
         return aiService.generateCommitMessage(prompt);
     }
 
-    public void generateCommitMessageStream(Project project, String diff, Consumer<String> onNext, Consumer<Throwable> onError) throws Exception {
+    public void generateCommitMessageStream(Project project, String diff, Consumer<String> onContent,Consumer<String> onReasoning, Consumer<Throwable> onError,Runnable finishCallBack) throws Exception {
         String prompt = PromptUtil.constructPrompt(project, diff);
-//        System.out.println(prompt);
-        aiService.generateCommitMessageStream(prompt, onNext);
+        //System.out.println(prompt);
+        aiService.generateCommitMessageStream(prompt, onContent,onReasoning,onError,finishCallBack);
     }
 
     public boolean generateByStream() {

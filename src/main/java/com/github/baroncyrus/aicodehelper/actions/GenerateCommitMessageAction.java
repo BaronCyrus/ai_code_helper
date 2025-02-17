@@ -1,14 +1,14 @@
 package com.github.baroncyrus.aicodehelper.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.github.baroncyrus.aicodehelper.popWindow.DynamicInfoPopupUI;
+import com.github.baroncyrus.aicodehelper.settings.ApiKeySettings;
+import com.intellij.openapi.actionSystem.*;
 
 
 import com.github.baroncyrus.aicodehelper.constant.Constants;
 import com.github.baroncyrus.aicodehelper.services.CommitMessageService;
 import com.github.baroncyrus.aicodehelper.util.GItUtil;
 import com.github.baroncyrus.aicodehelper.util.IdeaDialogUtil;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +23,8 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.vcs.commit.AbstractCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -38,7 +40,11 @@ public class GenerateCommitMessageAction extends AnAction {
         return (CommitMessage) e.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL);
     }
 
-    private final StringBuilder messageBuilder = new StringBuilder();
+    //private final StringBuilder messageBuilder = new StringBuilder();
+    private final StringBuilder contentBuilder = new StringBuilder();
+    private final StringBuilder reasoningBuilder = new StringBuilder();
+
+    private DynamicInfoPopupUI thinkingPopup = new DynamicInfoPopupUI();
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -46,6 +52,11 @@ public class GenerateCommitMessageAction extends AnAction {
         if (project == null) {
             return;
         }
+
+        // 初始化弹窗
+        thinkingPopup = new DynamicInfoPopupUI();
+        thinkingPopup.init(project);
+
         // 根据配置，创建对应的服务
         CommitMessageService commitMessageService = new CommitMessageService();
 
@@ -72,6 +83,9 @@ public class GenerateCommitMessageAction extends AnAction {
 
         commitMessage.setCommitMessage(Constants.GENERATING_COMMIT_MESSAGE);
 
+        ApiKeySettings settings = ApiKeySettings.getInstance();
+        String selectedModule = settings.getSelectedModule();
+
         // Run the time-consuming operations in a background task
         ProgressManager.getInstance().run(new Task.Backgroundable(project, Constants.TASK_TITLE, true) {
             @Override
@@ -80,24 +94,23 @@ public class GenerateCommitMessageAction extends AnAction {
                     String diff = GItUtil.computeDiff(includedChanges, includedUnversionedFiles, project);
 //                    System.out.println("diff: " + diff);
                     if (commitMessageService.generateByStream()) {
-                        messageBuilder.setLength(0);
+                        contentBuilder.setLength(0);
+                        reasoningBuilder.setLength(0);
+
+                        //带思维的模型显示弹窗
+                        if (Arrays.asList(Constants.thinkingModels).contains(selectedModule)){
+                            showThinkingPopup(project); // 显示弹窗
+                        }
+
                         commitMessageService.generateCommitMessageStream(
                                 project,
                                 diff,
                                 // onNext 处理每个token
-                                token -> ApplicationManager.getApplication().invokeLater(() -> {
-                                    if (messageBuilder.isEmpty()) {
-                                        messageBuilder.append(token);
-                                        commitMessage.setCommitMessage(token);
-                                    } else {
-                                        messageBuilder.append(token);
-                                        commitMessage.setCommitMessage(messageBuilder.toString());
-                                    }
-                                }),
+                                tokenC ->updateCommitMessage(tokenC,commitMessage),
+                                tokenR -> updateThinkingPopup(tokenR),
                                 // onError 处理错误
-                                error -> ApplicationManager.getApplication().invokeLater(() -> {
-                                    IdeaDialogUtil.showError(project, "Error generating commit message: <br>" + getErrorMessage(error.getMessage()), "Error");
-                                })
+                                error -> handleException(project, error),
+                                () -> finalizeGeneration(commitMessage)
                         );
                     } else {
                         String commitMessageFromAi = commitMessageService.generateCommitMessage(project, diff).trim();
@@ -112,6 +125,74 @@ public class GenerateCommitMessageAction extends AnAction {
                 }
             }
         });
+    }
+
+    // 显示思考过程弹窗
+    private void showThinkingPopup(Project project) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            if (!thinkingPopup.isShowing()) {
+                thinkingPopup.show(project);
+            }
+        });
+    }
+
+    // 更新提交消息内容
+    private void updateCommitMessage(String token, CommitMessage commitMessage) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            contentBuilder.append(token);
+            commitMessage.setCommitMessage(contentBuilder.toString());
+        });
+    }
+
+    // 更新思考弹窗内容
+    private void updateThinkingPopup(String token) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            if (thinkingPopup.isShowing()) {
+                reasoningBuilder.append(token);
+                thinkingPopup.appendText(token);
+                // 可选：自动滚动处理
+                JTextArea textArea = thinkingPopup.getContentArea();
+                textArea.setCaretPosition(textArea.getDocument().getLength());
+            }
+        });
+    }
+
+    // 完成生成后的处理
+    private void finalizeGeneration(CommitMessage commitMessage) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            // 清理思考过程内容
+            String finalMessage = contentBuilder.toString().trim();
+            commitMessage.setCommitMessage(finalMessage);
+
+            // 延迟关闭弹窗（可选动画效果）
+            new Timer(1000, e -> {
+                closeThinkingPopup();
+            }).start();
+        });
+    }
+
+    // 安全关闭弹窗
+    private void closeThinkingPopup() {
+        ApplicationManager.getApplication().invokeLater(() -> {
+            if (thinkingPopup != null && thinkingPopup.isShowing()) {
+                thinkingPopup.close();
+            }
+        });
+    }
+
+    // 异常处理
+    private void handleException(Project project, Throwable error) {
+        closeThinkingPopup();
+        // ... 原有异常处理逻辑 ...
+        ApplicationManager.getApplication().invokeLater(() -> {
+            IdeaDialogUtil.showError(project, "Error generating commit message: <br>" + getErrorMessage(error.getMessage()), "Error");
+        });
+    }
+
+    // 重置构建器
+    private void resetBuilders() {
+        contentBuilder.setLength(0);
+        reasoningBuilder.setLength(0);
     }
 
     private static @NotNull String getErrorMessage(String errorMessage) {

@@ -19,6 +19,8 @@ public class Constants {
     public static final String[] languages = {"English", "Chinese", "Japanese", "Korean", "French", "Spanish",
             "German", "Russian", "Arabic", "Portuguese"};
 
+    public static final String[] thinkingModels = {"deepseek-reasoner", "deepseek-ai/DeepSeek-R1","Pro/deepseek-ai/DeepSeek-R1"};
+
     public static final String PROJECT_PROMPT_FILE_NAME = "commit-prompt.txt";
     public static final String PROJECT_PROMPT = "Project Prompt";
     public static final String CUSTOM_PROMPT = "Custom Prompt";
@@ -43,7 +45,7 @@ public class Constants {
             put(DeepSeek, new String[]{"deepseek-chat","deepseek-reasoner"});
             put(Gemini, new String[]{"gemini-2.0-flash-exp", "gemini-1.5-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro"});
             put(OpenAI_API, new String[]{"gpt-4o","gpt-4o-mini","o1","o1-mini","o3-mini"});
-            put(SiliconFlow, new String[]{"deepseek-ai/DeepSeek-V3","deepseek-ai/DeepSeek-V2.5", "Qwen/Qwen2.5-Coder-32B-Instruct"});
+            put(SiliconFlow, new String[]{"deepseek-ai/DeepSeek-V3","deepseek-ai/DeepSeek-R1", "Pro/deepseek-ai/DeepSeek-V3","Pro/deepseek-ai/DeepSeek-R1"});
             put(Ollama, new String[]{"qwen2.5:14b", "llama3.2:3b"});
             put(CloudflareWorkersAI,new String[]{"@cf/meta/llama-3.1-70b-instruct", "@cf/meta/llama-3.1-8b-instruct"});
             put(阿里云百炼, new String[]{"qwen-plus"});

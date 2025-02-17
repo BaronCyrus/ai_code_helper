@@ -7,9 +7,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.github.baroncyrus.aicodehelper.constant.Constants;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,13 +64,12 @@ public class OpenAIUtil {
         return connection;
     }
 
-    public static void getAIResponseStream(String client, String textContent, Consumer<String> onNext) throws Exception {
+    public static void getAIResponseStream(String client, String textContent, Consumer<String> onContent, Consumer<String> onThinking,Runnable finishCallBack) throws Exception {
         ApiKeySettings settings = ApiKeySettings.getInstance();
         String selectedModule = settings.getSelectedModule();
         ApiKeySettings.ModuleConfig moduleConfig = settings.getModuleConfigs().get(client);
 
-        HttpURLConnection connection = OpenAIUtil.getHttpURLConnection(moduleConfig.getUrl(), selectedModule,
-                moduleConfig.getApiKey(), textContent);
+        HttpURLConnection connection = OpenAIUtil.getHttpURLConnection(moduleConfig.getUrl(), selectedModule, moduleConfig.getApiKey(), textContent);
 
         // 获取响应的字符集
         String charset = getCharsetFromContentType(connection.getContentType());
@@ -83,13 +84,28 @@ public class OpenAIUtil {
                         JsonNode root = mapper.readTree(jsonData);
                         JsonNode choices = root.path("choices");
                         if (choices.isArray() && !choices.isEmpty()) {
-                            String text = choices.get(0).path("delta").path("content").asText();
-                            onNext.accept(text);
+                            JsonNode delta = choices.get(0).path("delta");
+                            //解析两个内容字段
+                            String content = delta.path("content").asText();
+                            String reasoning = "";
+                            if (Arrays.asList(Constants.thinkingModels).contains(selectedModule)){
+                                reasoning = delta.path("reasoning_content").asText();
+                            }
+                            if (StringUtils.isNotEmpty(content) && !content.equals("null")) {
+                                onContent.accept(content);
+                            }
+                            if (StringUtils.isNotEmpty(reasoning) && !reasoning.equals("null")) {
+                                onThinking.accept(reasoning);
+                            }
                         }
+                    }else{
+                        System.out.println("本次对话结束");
+                        finishCallBack.run();
                     }
                 }
             }
         }
+
     }
 
     private static String getCharsetFromContentType(String contentType) {
