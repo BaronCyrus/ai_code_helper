@@ -5,12 +5,13 @@
     <vendor>baroncyrus</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>Git4Idea</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="AICodeAssist" anchor="right" factoryClass="com.github.baroncyrus.aicodehelper.toolWindow.MyToolWindowFactory" icon="/icons/helpericon.svg"/>
-        <projectConfigurable parentId="tools" instance="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" id="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" displayName="AI Code Assist"/>
+        <applicationConfigurable parentId="tools" instance="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" id="com.github.baroncyrus.aicodehelper.settings.CodeAssistSettingsConfigurable" displayName="AI Code Assist"/>
         <applicationService serviceImplementation="com.github.baroncyrus.aicodehelper.settings.ApiKeySettings"/>
     </extensions>
 
@@ -25,9 +26,7 @@
             <action id="SelectFunction2" class="com.github.baroncyrus.aicodehelper.actions.SelectFunction2" text="SomeFunction2" description="Function2"/>
             <action id="SelectFunction3" class="com.github.baroncyrus.aicodehelper.actions.SelectFunction3" text="SomeFunction3" description="Function3"/>
         </group>
-        <action id="AICommitMessage.Generate"
-                class="com.github.baroncyrus.aicodehelper.actions.GenerateCommitMessageAction"
-                text="Generate AI Commit Message" description="Generate a commit message using AI">
+        <action id="AICommitMessage.Generate" class="com.github.baroncyrus.aicodehelper.actions.GenerateCommitMessageAction" text="Generate AI Commit Message" description="Generate a commit message using AI" icon="/icons/helpericon.svg">
             <add-to-group group-id="Vcs.MessageActionGroup" anchor="after" relative-to-action="Vcs.ShowMessageHistory"/>
         </action>
     </actions>

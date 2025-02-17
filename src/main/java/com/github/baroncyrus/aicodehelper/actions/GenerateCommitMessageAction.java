@@ -54,8 +54,7 @@ public class GenerateCommitMessageAction extends AnAction {
             return;
         }
 
-        AbstractCommitWorkflowHandler<?, ?> commitWorkflowHandler = (AbstractCommitWorkflowHandler<?, ?>) e.getData(
-                VcsDataKeys.COMMIT_WORKFLOW_HANDLER);
+        AbstractCommitWorkflowHandler<?, ?> commitWorkflowHandler = (AbstractCommitWorkflowHandler<?, ?>) e.getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER);
         if (commitWorkflowHandler == null) {
             IdeaDialogUtil.handleNoChangesSelected(project);
             return;

@@ -1,5 +1,6 @@
 package com.github.baroncyrus.aicodehelper.settings;
 
+import com.github.baroncyrus.aicodehelper.constant.Constants;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
@@ -27,19 +28,49 @@ public class CodeAssistSettingsConfigurable implements Configurable {
 
     @Override
     public boolean isModified() {
-        return false;
+        return true;
     }
 
     @Override
     public void apply() {
+        if (ui == null) {
+            return;  // 如果UI已经被销毁，直接返回
+        }
 
+        // 保存当前设置到临时变量
+        String selectedClient = (String) ui.getClientComboBox().getSelectedItem();
+        String selectedModule = (String) ui.getModuleComboBox().getSelectedItem();
+        String commitLanguage = (String) ui.getLanguageComboBox().getSelectedItem();
+
+        // 应用设置
+        settings.setSelectedClient(selectedClient);
+        settings.setSelectedModule(selectedModule);
+        settings.setCommitLanguage(commitLanguage);
+
+        // 保存prompt内容
+        //Object selectedPromptType = ui.getPromptTypeComboBox().getSelectedItem();
+        //if (Constants.CUSTOM_PROMPT.equals(selectedPromptType)) {
+        //    saveCustomPromptsAndChoosedPrompt();
+        //}
+        // 保存prompt类型
+        //settings.setPromptType((String) selectedPromptType);
+    }
+
+    @Override
+    public void reset() {
+        loadSettings();
+    }
+
+    @Override
+    public void disposeUIResources() {
+        ui = null;
     }
 
     private void loadSettings() {
         if (ui != null) {
             ui.getClientComboBox().setSelectedItem(settings.getSelectedClient());
-            //ui.getModuleComboBox().setSelectedItem(settings.getSelectedModule());
-            //ui.getLanguageComboBox().setSelectedItem(settings.getCommitLanguage());
+            ui.getModuleComboBox().setSelectedItem(settings.getSelectedModule());
+            ui.getLanguageComboBox().setSelectedItem(settings.getCommitLanguage());
 
             // 设置表格数据
             //loadCustomPrompts();

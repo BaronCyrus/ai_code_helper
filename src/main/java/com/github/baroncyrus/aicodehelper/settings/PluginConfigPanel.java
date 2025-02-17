@@ -193,11 +193,15 @@ public class PluginConfigPanel {
     }
 
 
-    public String getSelectedModel() {
-        return (String) modelComboBox.getSelectedItem();
-    }
-
     public JComboBox<String> getClientComboBox() {
         return clientNameField;
+    }
+
+    public ComboBox<String> getModuleComboBox() {
+        return modelComboBox;
+    }
+
+    public ComboBox<String> getLanguageComboBox() {
+        return languageComboBox;
     }
 }
