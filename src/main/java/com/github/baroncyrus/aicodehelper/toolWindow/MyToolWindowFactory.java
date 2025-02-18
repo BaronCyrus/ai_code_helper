@@ -135,9 +135,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5),
                     BorderFactory.createMatteBorder(0, 3, 0, 0, isUser ? JBColor.yellow : JBColor.GRAY)));
             messagePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            messagePanel.setBackground(isUser ?
-                    new JBColor(new Color(225, 245, 254), new Color(225, 245, 254)) :
-                    new JBColor(Gray._240, Gray._240));
+            messagePanel.setBackground(isUser ?new JBColor(Color.green, Color.green) : new JBColor(Gray._240, Gray._240));
 
 
             // 消息头
@@ -156,28 +154,40 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             String fontFamily = contentPane.getFont().getName().replaceAll("'", "''");
             String css = "<style>"
                     + "body {"
-                    + "  margin:0;"
-                    + "  padding:5px;"
+                    + "  margin:0; padding:5px;"
                     + "  word-wrap:break-word !important;"
                     + "  white-space:pre-wrap !important;"
                     + "  max-width:" + calculateMaxWidth() + "px !important;"
                     + "  font-family:'" + fontFamily + "', sans-serif;"
                     + "  font-size:" + contentPane.getFont().getSize() + "px;"
                     + "}"
+                    + ".lang-label {"
+                    + "  background: #e0e0e0;"
+                    + "  color: #666;"
+                    + "  padding: 2px 8px;"
+                    + "  border-radius: 4px 4px 0 0;"
+                    + "  font-size: 0.8em;"
+                    + "  font-family: monospace;"
+                    + "  display: none;"
+                    + "}"
+                    + ".lang-label:not(:empty) { display: block; }"
                     + ".code-block {"
                     + "  background:#F5F5F5;"
-                    + "  padding:5px 8px;"
+                    + "  padding:5px 0;"
                     + "  border-radius:4px;"
                     + "  margin:3px 0;"
                     + "  overflow-x:auto;"
+                    + "}"
+                    + ".code-block pre {"
+                    + "  margin:0;"
+                    + "  padding:5px 8px;"
                     + "  white-space:pre;"
-                    + "  max-width:100%;"
                     + "}"
                     + "</style>";
 
-
             // 处理代码块
-            String processed = content.replaceAll("```(\\w+)?\\s*([\\s\\S]*?)```","<div class='code-block'><pre>$2</pre></div>");
+            String processed = content.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```","<div class='code-block'><div class='lang-label'>$2</div><pre>$3</pre></div>");
+
             contentPane.setText("<html>" + css + "<body>" + processed + "</body></html>");
             contentPane.setPreferredSize(new Dimension(calculateMaxWidth(), contentPane.getPreferredSize().height));
 

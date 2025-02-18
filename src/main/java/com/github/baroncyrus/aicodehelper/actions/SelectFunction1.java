@@ -49,11 +49,13 @@ public class SelectFunction1 extends AnAction {
         // 显示工具窗口
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("AICodeAssist");
 
+
+        //todo 根据选中内容文件名后缀 拿到当前代码块的语言 比如C# java
         if (toolWindow != null) {
             toolWindow.show(() -> {
                 MyToolWindowFactory.ChatWindow window = MyToolWindowFactory.ChatWindow.getInstance(project);
                 if (window != null) {
-                    window.addMessage("Me", "Explain Code: ```" + selectedText + "```", true);
+                    window.addMessage("Me", "Explain Code: ```csharp\n" + selectedText + "```", true);
                 }
             });
         }
