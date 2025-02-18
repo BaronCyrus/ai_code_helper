@@ -5,6 +5,7 @@
     <vendor>baroncyrus</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>org.intellij.plugins.markdown</depends>
     <depends>Git4Idea</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
