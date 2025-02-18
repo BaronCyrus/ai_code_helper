@@ -54,8 +54,10 @@ public class GenerateCommitMessageAction extends AnAction {
         }
 
         // 初始化弹窗
-        thinkingPopup = new DynamicInfoPopupUI();
-        thinkingPopup.init(project);
+        if (thinkingPopup == null){
+            thinkingPopup = new DynamicInfoPopupUI();
+            thinkingPopup.init(project);
+        }
 
         // 根据配置，创建对应的服务
         CommitMessageService commitMessageService = new CommitMessageService();
@@ -164,20 +166,18 @@ public class GenerateCommitMessageAction extends AnAction {
             String finalMessage = contentBuilder.toString().trim();
             commitMessage.setCommitMessage(finalMessage);
 
-            // 延迟关闭弹窗（可选动画效果）
-            new Timer(1000, e -> {
-                closeThinkingPopup();
-            }).start();
+            closeThinkingPopup();
         });
     }
 
     // 安全关闭弹窗
     private void closeThinkingPopup() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-            if (thinkingPopup != null && thinkingPopup.isShowing()) {
+        if (thinkingPopup != null){
+            if(thinkingPopup.isShowing()){
                 thinkingPopup.close();
             }
-        });
+            thinkingPopup = null;
+        }
     }
 
     // 异常处理
@@ -221,11 +221,11 @@ public class GenerateCommitMessageAction extends AnAction {
         return errorMessage;
     }
 
+    //防止重复点击的状态检查
     @Override
     public void update(@NotNull AnActionEvent e) {
-        // 控制 Action 的启用/禁用状态
-        Project project = e.getProject();
-        e.getPresentation().setEnabledAndVisible(project != null);
+        boolean inProgress = thinkingPopup != null && thinkingPopup.isShowing();
+        e.getPresentation().setEnabled(!inProgress);
     }
 
     @Override

@@ -105,6 +105,12 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             sendButton.setIcon(LOADING_ICON);
             sendButton.setEnabled(false);
 
+
+            addMessage("AI Code Assistant", "你的代码非常的棒！加油", false);
+            inputArea.setText("");
+            sendButton.setIcon(SEND_ICON);
+            sendButton.setEnabled(true);
+
             // 调用OpenAI API（示例代码）
 //            CompletableFuture.runAsync(() -> {
 //                try {
