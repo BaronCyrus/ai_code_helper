@@ -44,10 +44,16 @@ public class GenerateCommitMessageAction extends AnAction {
     private final StringBuilder contentBuilder = new StringBuilder();
     private final StringBuilder reasoningBuilder = new StringBuilder();
 
-    private DynamicInfoPopupUI thinkingPopup = new DynamicInfoPopupUI();
+    private volatile DynamicInfoPopupUI thinkingPopup;
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+        if (thinkingPopup != null && thinkingPopup.isShowing()){
+            System.out.println("please wait for thinking end");
+            return;
+        }
+
+
         Project project = e.getProject();
         if (project == null) {
             return;

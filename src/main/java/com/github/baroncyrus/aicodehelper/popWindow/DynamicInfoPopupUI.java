@@ -35,7 +35,7 @@ public class DynamicInfoPopupUI {
 
         popup = JBPopupFactory.getInstance()
                 .createComponentPopupBuilder(scrollPane, null)
-                .setTitle("AI 思考过程")
+                .setTitle("AI Thinking")
                 .setMovable(true)
                 .setResizable(true)
                 .setRequestFocus(false)

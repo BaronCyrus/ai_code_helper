@@ -56,6 +56,8 @@ public class SelectFunction1 extends AnAction {
                 MyToolWindowFactory.ChatWindow window = MyToolWindowFactory.ChatWindow.getInstance(project);
                 if (window != null) {
                     window.addMessage("Me", "Explain Code: ```csharp\n" + selectedText + "```", true);
+
+                    window.addMessage("AI Code Assist","very good boy",false);
                 }
             });
         }
