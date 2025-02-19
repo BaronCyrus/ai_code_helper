@@ -54,13 +54,9 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             // 消息显示区域
             messageContainer = new JPanel();
-            messageContainer.setLayout(new VerticalFlowLayout(
-                    VerticalFlowLayout.LEFT,   // 水平左对齐
-                    10,                        // 水平间隙 (hGap)
-                    5,                         // 垂直间隙 (vGap)
-                    true,                      // 水平填充 (fillHorizontally)
-                    false                      // 不垂直填充 (fillVertically)
-            ));
+            // 修改 messageContainer 的布局为 BoxLayout
+            messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.Y_AXIS));
+            messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 
 
@@ -87,9 +83,16 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             // 添加窗口尺寸监听（构造器中）
             panel.addComponentListener(new ComponentAdapter() {
+                private int lastWidth = -1;
+
                 @Override
                 public void componentResized(ComponentEvent e) {
-                    updateAllMessageWidths();
+                    if (panel.getWidth() != lastWidth) {
+                        lastWidth = panel.getWidth();
+                        updateAllMessageWidths();
+                        messageContainer.revalidate();
+                        messageContainer.repaint();
+                    }
                 }
             });
         }
@@ -147,15 +150,16 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 return;
             }
 
-            JPanel messagePanel = new JPanel(new BorderLayout());
-            messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5),
-                    BorderFactory.createMatteBorder(0, 3, 0, 0, isUser ? JBColor.yellow : JBColor.GRAY)));
+            JPanel messagePanel = new JPanel();
+            messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
             messagePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), BorderFactory.createMatteBorder(0, 3, 0, 0, isUser ? JBColor.yellow : JBColor.GRAY)));
             messagePanel.setBackground(isUser ? new JBColor(new Color(0xDBE8FF), new Color(0x2B5278)) :new JBColor(new Color(0xFFFFFF), new Color(0x3C3F41)));
 
             // 同步调整边框颜色（可选）
             Border borderColor = BorderFactory.createMatteBorder(0, 0, 0, 0, JBColor.WHITE); // 浅灰/深灰
             messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), borderColor));
+
 
             // 消息头
             JLabel senderLabel = new JLabel(sender);
@@ -168,9 +172,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             JTextPane contentPane = new JTextPane() {
                 @Override
                 public Dimension getPreferredSize() {
-                    Dimension d = super.getPreferredSize();
-                    d.width = Math.min(calculateMaxWidth(), d.width);
-                    return d;
+                    // 强制设置宽度后再计算高度
+                    int width = calculateMaxWidth();
+                    setSize(width, super.getHeight());
+                    return new Dimension(width, super.getPreferredSize().height);
                 }
             };
             contentPane.setContentType("text/html");
@@ -186,6 +191,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                     + "  margin:0; padding:0;"
                     + "  word-wrap:break-word !important;"
                     + "  white-space:pre-wrap !important;"
+                    + "  width: 100% !important;"          // 新增宽度限制
                     + "  max-width:" + calculateMaxWidth() + "px !important;"
                     + "  font-family:'" + fontFamily + "', sans-serif;"
                     + "  font-size:" + contentPane.getFont().getSize() + "px;"
@@ -221,13 +227,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             // 精确计算文本高度
             SwingUtilities.invokeLater(() -> {
-                try {
-                    int textHeight = contentPane.getPreferredSize().height;
-                    contentPane.setPreferredSize(new Dimension(calculateMaxWidth(), textHeight));
-                    messagePanel.revalidate();
-                } catch (Exception e) {
-                    Logger.getInstance(ChatWindow.class).error(e);
-                }
+                contentPane.setSize(calculateMaxWidth(), Short.MAX_VALUE); // 强制宽度
+                Dimension d = contentPane.getPreferredSize();
+                contentPane.setPreferredSize(d);
+                messagePanel.revalidate();
             });
 
             // 添加组件
@@ -247,6 +250,9 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         // 新增宽度计算方法
         private int calculateMaxWidth() {
             int panelWidth = panel.getWidth();
+            if (panelWidth == 0) {
+                return 600; // 初始默认宽度
+            }
             return Math.max(panelWidth - 50, 200); // 确保最小宽度200px
         }
 
@@ -267,13 +273,33 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
         private void updateTextPaneWidth(JTextPane pane) {
             int width = calculateMaxWidth();
+
+            // 强制父容器宽度
+            JPanel messagePanel = (JPanel) pane.getParent();
+            messagePanel.setMaximumSize(new Dimension(width, Short.MAX_VALUE));
+            messagePanel.setPreferredSize(new Dimension(width, messagePanel.getPreferredSize().height));
+
+
             pane.setSize(width, pane.getHeight()); // 显式设置尺寸
+            pane.setPreferredSize(new Dimension(width, pane.getPreferredSize().height));
+
             HTMLDocument doc = (HTMLDocument) pane.getDocument();
             doc.getStyleSheet().addRule(
-                    "body { max-width: " + width + "px !important; }"
+                    "body { " +
+                            "   max-width: " + width + "px !important;" +
+                            "   width: " + width + "px !important;" + // 新增强制宽度
+                            "}"
             );
-            pane.setContentType("text/html"); // 强制刷新
-            pane.setText(pane.getText());
+
+            // 强制刷新内容
+            String text = pane.getText();
+            pane.setText("");  // 清空内容强制样式重置
+            pane.setText(text);
+
+            // 重新计算布局
+            pane.invalidate();
+            pane.revalidate();
+            pane.repaint();
         }
 
         // 在scrollToBottom方法中添加异步滚动
