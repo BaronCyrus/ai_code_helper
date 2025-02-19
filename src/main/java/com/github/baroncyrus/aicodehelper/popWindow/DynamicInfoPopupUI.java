@@ -38,8 +38,10 @@ public class DynamicInfoPopupUI {
                 .setTitle("AI Thinking")
                 .setMovable(true)
                 .setResizable(true)
-                .setRequestFocus(false)
+                .setRequestFocus(true)
                 .setCancelOnClickOutside(false)
+                .setCancelOnOtherWindowOpen(false)  // 禁用其他窗口打开时关闭
+                .setCancelOnWindowDeactivation(false)  // 禁用窗口失焦关闭
                 .setCancelCallback(() -> {
                     isShowing = false;
                     return true;

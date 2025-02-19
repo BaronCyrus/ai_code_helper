@@ -23,7 +23,8 @@ public class PromptUtil {
             promptContent = settings.getCustomPrompt().getPrompt();
         }
 
-        promptContent = "请使用{language}总结这份diff文件，提炼一个commit message，尽量简短 {diff}";
+        promptContent = PromptUtil.DEFAULT_PROMPT_3;
+
         // check prompt content
         if (!promptContent.contains("{diff}")) {
             throw new IllegalArgumentException("The prompt file must contain the placeholder {diff}.");
