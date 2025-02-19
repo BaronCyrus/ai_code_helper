@@ -44,7 +44,6 @@ dependencies {
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
 
         bundledPlugin("Git4Idea")
-        bundledPlugin("org.intellij.plugins.markdown")
 
         instrumentationTools()
         pluginVerifier()
