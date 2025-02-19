@@ -90,7 +90,15 @@ public class OpenAIUtil {
                             String reasoning = "";
                             if (Arrays.asList(Constants.thinkingModels).contains(selectedModule)){
                                 reasoning = delta.path("reasoning_content").asText();
+                            }else{
+                                //如果不是配置的思考模型，分析是否有这个数据
+                                var jsonNode = delta.path("reasoning_content");
+                                if (jsonNode != null){
+                                    reasoning = jsonNode.asText();
+                                }
                             }
+
+
                             if (StringUtils.isNotEmpty(content) && !content.equals("null")) {
                                 onContent.accept(content);
                             }

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Action 类，用于生成 Git commit 消息
@@ -115,7 +116,7 @@ public class GenerateCommitMessageAction extends AnAction {
                                 diff,
                                 // onNext 处理每个token
                                 tokenC ->updateCommitMessage(tokenC,commitMessage),
-                                tokenR -> updateThinkingPopup(tokenR),
+                                tokenR -> updateThinkingPopup(tokenR,project),
                                 // onError 处理错误
                                 error -> handleException(project, error),
                                 () -> finalizeGeneration(commitMessage)
@@ -153,14 +154,23 @@ public class GenerateCommitMessageAction extends AnAction {
     }
 
     // 更新思考弹窗内容
-    private void updateThinkingPopup(String token) {
+    private void updateThinkingPopup(String token,Project project) {
         ApplicationManager.getApplication().invokeLater(() -> {
             if (thinkingPopup.isShowing()) {
                 reasoningBuilder.append(token);
                 thinkingPopup.appendText(token);
-                // 可选：自动滚动处理
                 JTextArea textArea = thinkingPopup.getContentArea();
                 textArea.setCaretPosition(textArea.getDocument().getLength());
+            }else{
+                //如果弹窗没显示，判断是否返回了思考内容，返回则显示出来
+                if (!Objects.equals(token, "null") && !Objects.equals(token, "")){
+                    showThinkingPopup(project); // 显示弹窗
+                    reasoningBuilder.append(token);
+                    thinkingPopup.appendText(token);
+                    // 可选：自动滚动处理
+                    JTextArea textArea = thinkingPopup.getContentArea();
+                    textArea.setCaretPosition(textArea.getDocument().getLength());
+                }
             }
         });
     }

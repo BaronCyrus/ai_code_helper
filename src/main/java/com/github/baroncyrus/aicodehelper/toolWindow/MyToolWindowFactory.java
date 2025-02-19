@@ -163,6 +163,8 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             // 消息头
             JLabel senderLabel = new JLabel(sender);
+            senderLabel.setHorizontalAlignment(SwingConstants.LEFT);
+            senderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             senderLabel.setFont(senderLabel.getFont().deriveFont(Font.BOLD).deriveFont(14f));
             senderLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
             senderLabel.setForeground(isUser ? new JBColor(new Color(0x2B5278), new Color(0x8CACD6)) : new JBColor(new Color(0x616161), new Color(0xBBBBBB)));
@@ -234,8 +236,8 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             });
 
             // 添加组件
-            messagePanel.add(senderLabel, BorderLayout.NORTH);
-            messagePanel.add(contentPane, BorderLayout.CENTER);
+            messagePanel.add(senderLabel);
+            messagePanel.add(contentPane);
 
             // 添加到容器
             messageContainer.add(messagePanel);
