@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.text.Element;
+import javax.swing.text.View;
 import javax.swing.text.html.HTMLDocument;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
@@ -170,14 +171,29 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             senderLabel.setForeground(isUser ? new JBColor(new Color(0x2B5278), new Color(0x8CACD6)) : new JBColor(new Color(0x616161), new Color(0xBBBBBB)));
 
             // 内容面板
-            // 内容面板
             JTextPane contentPane = new JTextPane() {
+                private int maxContentWidth = calculateMaxContentWidth();
+
                 @Override
                 public Dimension getPreferredSize() {
-                    // 强制设置宽度后再计算高度
-                    int width = calculateMaxWidth();
-                    setSize(width, super.getHeight());
-                    return new Dimension(width, super.getPreferredSize().height);
+                    // 计算纯文本宽度
+                    String plainText = getText().replaceAll("<[^>]+>", "");
+                    FontMetrics fm = getFontMetrics(getFont());
+                    int textWidth = fm.stringWidth(plainText) + 20; // 增加边距
+                    int actualWidth = Math.min(textWidth, maxContentWidth);
+
+                    // 计算精确高度
+                    View rootView = getUI().getRootView(this);
+                    rootView.setSize(actualWidth, Integer.MAX_VALUE);
+                    float height = rootView.getPreferredSpan(View.Y_AXIS);
+
+                    return new Dimension(actualWidth, (int) Math.ceil(height));
+                }
+
+                @Override
+                public void setBounds(int x, int y, int width, int height) {
+                    // 确保宽度不超过最大限制
+                    super.setBounds(x, y, Math.min(width, maxContentWidth), height);
                 }
             };
             contentPane.setContentType("text/html");
@@ -224,16 +240,8 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             // 处理代码块
             String processed = content.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```","<div class='code-block'><div class='lang-label'>$2</div><pre>$3</pre></div>");
-
             contentPane.setText("<html>" + css + "<body>" + processed + "</body></html>");
 
-            // 精确计算文本高度
-            SwingUtilities.invokeLater(() -> {
-                contentPane.setSize(calculateMaxWidth(), Short.MAX_VALUE); // 强制宽度
-                Dimension d = contentPane.getPreferredSize();
-                contentPane.setPreferredSize(d);
-                messagePanel.revalidate();
-            });
 
             // 添加组件
             messagePanel.add(senderLabel);
@@ -248,6 +256,12 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             messageContainer.repaint();
             scrollToBottom();
         }
+
+        private int calculateMaxContentWidth() {
+            int panelWidth = panel.getWidth();
+            return panelWidth > 0 ? (int) (panelWidth * 0.7) : 400; // 70%面板宽度
+        }
+
 
         // 新增宽度计算方法
         private int calculateMaxWidth() {
@@ -266,6 +280,8 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                     for (Component child : children) {
                         if (child instanceof JTextPane) {
                             JTextPane pane = (JTextPane) child;
+                            pane.setMaximumSize(new Dimension(calculateMaxContentWidth(),pane.getHeight()));
+                            pane.revalidate();
                             updateTextPaneWidth(pane);
                         }
                     }

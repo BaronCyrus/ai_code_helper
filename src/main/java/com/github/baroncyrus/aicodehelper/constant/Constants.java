@@ -37,8 +37,9 @@ public class Constants {
     public static final String SiliconFlow = "SiliconFlow(Model Hub)";//硅基流动
     public static final String CloudflareWorkersAI = "Cloudflare Workers AI";
     public static final String VolcanoEngine = "VolcanoEngine(Model Hub)";//火山引擎 字节跳动旗下
+    public static final String Grok = "Grok";
 
-    public static final String[] LLM_CLIENTS = {DeepSeek, SiliconFlow,VolcanoEngine, Gemini, OpenAI_API};
+    public static final String[] LLM_CLIENTS = {DeepSeek, SiliconFlow,VolcanoEngine, Gemini, OpenAI_API,Grok};
 
     public static final Map<String, String[]> CLIENT_MODULES = new HashMap<>() {
         {
@@ -50,6 +51,7 @@ public class Constants {
             put(CloudflareWorkersAI,new String[]{"@cf/meta/llama-3.1-70b-instruct", "@cf/meta/llama-3.1-8b-instruct"});
             put(阿里云百炼, new String[]{"qwen-plus"});
             put(VolcanoEngine,new String[]{""});
+            put(Grok,new String[]{"grok-2"});
         }
     };
 
@@ -63,6 +65,7 @@ public class Constants {
             put(SiliconFlow, new ApiKeySettings.ModuleConfig("https://api.siliconflow.cn/v1/chat/completions", ""));
             put(CloudflareWorkersAI, new ApiKeySettings.ModuleConfig("https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions", ""));
             put(VolcanoEngine,new ApiKeySettings.ModuleConfig("https://ark.cn-beijing.volces.com/api/v3/chat/completions", ""));
+            put(Grok,new ApiKeySettings.ModuleConfig("https://api.x.ai/v1/chat/completions", ""));
         }
     };
 
@@ -74,6 +77,8 @@ public class Constants {
             put(Constants.阿里云百炼, "https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key?spm=0.0.0.i7");
             put(Constants.SiliconFlow, "https://cloud.siliconflow.cn/i/lszKPlCW");
             put(Constants.OpenAI_API, "https://platform.openai.com/docs/overview");
+            put(Constants.Grok,"https://console.x.ai");
+            put(Constants.VolcanoEngine,"https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey");
         }
     };
 
@@ -103,6 +108,10 @@ public class Constants {
                     "<html>Get your API key from <a href='https://help.aliyun.com/zh/model-studio/developer-reference/get-api-key?spm=0.0.0.i7'>" + 阿里云百炼 + "</a></html>";
             case SiliconFlow ->
                     "<html>Get your API key from <a href='https://cloud.siliconflow.cn/i/lszKPlCW'>" + SiliconFlow + "</a></html>";
+            case Grok ->
+                    "<html>Get your API key from <a href='https://console.x.ai'>" + Grok + "</a></html>";
+            case VolcanoEngine ->
+                    "<html>Get your API key from <a href='https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey'>" + VolcanoEngine + "</a></html>";
             default -> "";
         };
     }

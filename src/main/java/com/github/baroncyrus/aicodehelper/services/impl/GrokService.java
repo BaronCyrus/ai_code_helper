@@ -6,13 +6,7 @@ import com.github.baroncyrus.aicodehelper.util.OpenAIUtil;
 
 import java.util.function.Consumer;
 
-/**
- * SiliconFlowService
- *
- * @author hmydk
- */
-public class SiliconFlowService implements AIService {
-
+public class GrokService implements AIService {
     @Override
     public boolean generateByStream() {
         return true;
@@ -24,14 +18,12 @@ public class SiliconFlowService implements AIService {
     }
 
     @Override
-    public void generateCommitMessageStream(String content, Consumer<String> onNext,Consumer<String> onThinking,Consumer<Throwable> onError,Runnable finishCallBack) throws Exception {
-        OpenAIUtil.getAIResponseStream(Constants.SiliconFlow, content, onNext,onThinking,finishCallBack);
+    public void generateCommitMessageStream(String content, Consumer<String> onNext, Consumer<String> onThinking, Consumer<Throwable> onError, Runnable finishCallBack) throws Exception {
+        OpenAIUtil.getAIResponseStream(Constants.Grok, content, onNext,onThinking,finishCallBack);
     }
 
     @Override
     public boolean checkNecessaryModuleConfigIsRight() {
-        return OpenAIUtil.checkNecessaryModuleConfigIsRight(Constants.SiliconFlow);
+        return OpenAIUtil.checkNecessaryModuleConfigIsRight(Constants.Grok);
     }
-
-
 }

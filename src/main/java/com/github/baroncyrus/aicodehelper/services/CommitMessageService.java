@@ -48,6 +48,7 @@ public class CommitMessageService {
             //case Constants.CloudflareWorkersAI -> new CloudflareWorkersAIService();
             case Constants.VolcanoEngine -> new VolcanoEngineService();
             case Constants.SiliconFlow -> new SiliconFlowService();
+            case Constants.Grok -> new GrokService();
             default -> throw new IllegalArgumentException("Invalid LLM client: " + selectedClient);
         };
     }
