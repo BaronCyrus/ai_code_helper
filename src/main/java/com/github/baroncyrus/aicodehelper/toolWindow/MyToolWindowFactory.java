@@ -54,6 +54,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final Project project;
         private final JBScrollPane messageScrollPane;
         private JBScrollPane inputScrollPane;
+        private JPanel inputWrapper; // 新增包装面板
 
         // 输入框高度设置
         private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
@@ -78,11 +79,13 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             inputArea.setLineWrap(true);
             inputArea.setWrapStyleWord(true);
 
-            // 动态调整输入框高度
+            // 使用包装面板控制输入框向上扩展
+            inputWrapper = new JPanel(new BorderLayout());
             inputScrollPane = new JBScrollPane(inputArea);
             inputScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-            inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            inputScrollPane.setBorder(BorderFactory.createEmptyBorder()); // 移除默认边框美化
+            inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+            inputScrollPane.setBorder(BorderFactory.createEmptyBorder());
+            inputWrapper.add(inputScrollPane, BorderLayout.CENTER);
             adjustInputHeight();
 
             inputArea.getDocument().addDocumentListener(new DocumentListener() {
@@ -106,7 +109,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
             sendButton = new JButton(SEND_ICON);
             sendButton.addActionListener(e -> sendMessage());
-            inputPanel.add(inputScrollPane, BorderLayout.CENTER);
+            inputPanel.add(inputWrapper, BorderLayout.CENTER);
             inputPanel.add(sendButton, BorderLayout.EAST);
             panel.add(inputPanel, BorderLayout.SOUTH);
 
@@ -117,6 +120,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                     SwingUtilities.invokeLater(() -> {
                         messageContainer.revalidate();
                         messageContainer.repaint();
+                        adjustInputHeight(); // 窗口大小变化时也调整输入框
                     });
                 }
             });
@@ -137,20 +141,50 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         // 调整输入框高度
         private void adjustInputHeight() {
             SwingUtilities.invokeLater(() -> {
-                int lineCount = inputArea.getLineCount();
-                int newRows = Math.min(Math.max(lineCount, MIN_ROWS), MAX_ROWS);
-                inputArea.setRows(newRows);
+                int rowHeight = inputArea.getFontMetrics(inputArea.getFont()).getHeight();
+                int availableWidth = inputArea.getWidth() > 0 ? inputArea.getWidth() : 300;
+                int requiredRows = getRowsForText(inputArea.getText(), availableWidth);
+                int displayRows = Math.min(Math.max(requiredRows, MIN_ROWS), MAX_ROWS);
 
-                // 如果达到最大行数，启用滚动条
-                if (lineCount > MAX_ROWS) {
+                // 设置 inputArea 的首选高度为实际所需高度
+                int contentHeight = requiredRows * rowHeight;
+                inputArea.setPreferredSize(new Dimension(availableWidth, contentHeight));
+
+                // 设置 inputWrapper 的显示高度，限制在 MAX_ROWS
+                int displayHeight = displayRows * rowHeight;
+                inputWrapper.setPreferredSize(new Dimension(availableWidth, displayHeight));
+                inputWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, displayHeight));
+
+                // 控制滚动条显示
+                if (requiredRows > MAX_ROWS) {
                     inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
                 } else {
                     inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
                 }
 
-                inputScrollPane.revalidate();
-                inputScrollPane.repaint();
+                inputWrapper.revalidate();
+                inputWrapper.repaint();
+                panel.revalidate();
+                panel.repaint();
             });
+        }
+
+        // 计算文本所需的行数
+        private int getRowsForText(String text, int width) {
+            if (text.isEmpty()) return 1;
+            FontMetrics fm = inputArea.getFontMetrics(inputArea.getFont());
+            int lineHeight = fm.getHeight();
+            int availableWidth = width - 10; // 留出边距
+            int totalHeight = 0;
+
+            String[] lines = text.split("\n");
+            for (String line : lines) {
+                int lineWidth = fm.stringWidth(line);
+                int wrappedLines = (int) Math.ceil((double) lineWidth / availableWidth);
+                totalHeight += Math.max(wrappedLines, 1) * lineHeight;
+            }
+
+            return (int) Math.ceil((double) totalHeight / lineHeight);
         }
 
 

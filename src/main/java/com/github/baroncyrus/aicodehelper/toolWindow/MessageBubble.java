@@ -46,9 +46,13 @@ public class MessageBubble extends JPanel {
                 ".code-block { background:#F5F5F5; padding:5px; border-radius:4px; margin:3px 0; overflow-x:auto; }" +
                 ".code-block pre { margin:0; padding:5px 8px; white-space:pre; }" +
                 "</style>";
-        String processed = content.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```",
+
+        // 先将普通文本中的换行符转换为 <br>，然后处理代码块
+        String processedContent = content.replaceAll("\n", "<br>");
+        processedContent = processedContent.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```",
                 "<div class='code-block'><pre>$3</pre></div>");
-        contentPane.setText("<html>" + css + "<body>" + processed + "</body></html>");
+
+        contentPane.setText("<html>" + css + "<body>" + processedContent + "</body></html>");
         revalidate();
         repaint();
     }
