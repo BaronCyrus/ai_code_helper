@@ -80,6 +80,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private static final int UPDATE_INTERVAL_MS = 200; // 每200ms更新一次 UI
         private final Timer updateTimer;
         private volatile boolean needsUpdate = false;
+        private MessageBubble currentBubble;
 
         public ChatWindow(Project project) {
             this.project = project;
@@ -151,10 +152,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             updateTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    if (needsUpdate && isGenerating) {
+                    if (needsUpdate && isGenerating && currentBubble != null) {
                         SwingUtilities.invokeLater(() -> {
-                            messageContainer.revalidate();
-                            messageContainer.repaint();
+                            currentBubble.updateLayout(); // 更新布局
+                            messageContainer.repaint(); // 只重绘，不重新布局
                             scrollToBottom();
                             needsUpdate = false;
                         });
@@ -302,9 +303,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             contentResBuilder.setLength(0);
             contentResBuilder.append("think start\n");
             inputArea.setText("Generating Answer...");//设置正在生成
-            MessageBubble bubble = new MessageBubble(sender, "", false, messageContainer);
+            currentBubble = new MessageBubble(sender, "", false, messageContainer);
+
             SwingUtilities.invokeLater(() -> {
-                messageContainer.add(bubble);
+                messageContainer.add(currentBubble);
                 messageContainer.revalidate();
                 messageContainer.repaint();
                 scrollToBottom();
@@ -317,16 +319,16 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                         token -> SwingUtilities.invokeLater(() -> {
                             contentBuilder.append(token);
                             if (contentResBuilder.length() > 100){
-                                bubble.updateText(contentResBuilder + "\nthink end" + contentBuilder);
+                                currentBubble.updateText(contentResBuilder + "\nthink end" + contentBuilder);
                             }else{
-                                bubble.updateText(contentBuilder.toString());
+                                currentBubble.updateText(contentBuilder.toString());
                             }
                             needsUpdate = true;
                         }),
                         reasoning -> {
                             if (!Objects.equals(reasoning, "null") && !Objects.equals(reasoning, "")){
                                 contentResBuilder.append(reasoning);
-                                bubble.updateText(contentResBuilder.toString());
+                                currentBubble.updateText(contentResBuilder.toString());
                                 needsUpdate = true;
                             }
                         }, // 可选处理推理内容
@@ -352,6 +354,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             sendButton.setEnabled(true); // 恢复发送按钮
             isGenerating = false; // 重置生成标志
             inputArea.setText("");
+            currentBubble = null;
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
@@ -369,8 +372,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
         private void scrollToBottom() {
             SwingUtilities.invokeLater(() -> {
-                JScrollBar vertical = messageScrollPane.getVerticalScrollBar();
-                vertical.setValue(vertical.getMaximum());
+                if (currentBubble != null) {
+                    Rectangle rect = currentBubble.getBounds();
+                    messageScrollPane.getViewport().scrollRectToVisible(rect);
+                }
             });
         }
 
