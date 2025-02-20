@@ -48,12 +48,20 @@ public class MessageBubble extends JPanel {
         String css = "<style>" +
                 "body { margin:0; padding:0; overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap; max-width:" + currentMaxWidth + "px; font-size:" + ideFontSize + "px; font-family:'" + UIUtil.getFont(UIUtil.FontSize.NORMAL, null).getFamily() + "'; }" +
                 ".code-block { background:#F5F5F5; padding:5px; border-radius:4px; margin:3px 0; overflow-x:auto; }" +
-                ".code-block pre { margin:0; padding:5px 8px; white-space:pre; font-size:" + ideFontSize + "px; font-family:monospace; }" +
+                ".code-block pre { margin:0; padding:5px 8px; white-space:pre-wrap; font-size:" + ideFontSize + "px; font-family:monospace; }" +
+                ".code-lang { font-size:" + (ideFontSize - 2) + "px; color:#888; margin-bottom:2px; }" + // 语言标记样式
                 "</style>";
 
-        String processedContent = content.replaceAll("\n", "<br>");
-        processedContent = processedContent.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```",
-                "<div class='code-block'><pre>$3</pre></div>");
+        // 只处理换行符和代码块，保留语言标记
+        String processedContent = content
+                .replaceAll("\n", "<br>") // 换行符转为 <br>
+                .replaceAll("```(\\w+)?\\s*([\\s\\S]*?)\\s*```", "<span class='code-lang'>$1</span><div class='code-block'><pre>$2</pre></div>"); // 代码块，保留语言
+
+        // 处理空语言标记的情况
+        processedContent = processedContent.replace("<span class='code-lang'></span>", ""); // 如果无语言，去掉空 span
+
+        // 调试输出
+        System.out.println("Processed Markdown: " + processedContent);
 
         contentPane.setText("<html>" + css + "<body>" + processedContent + "</body></html>");
         revalidate();

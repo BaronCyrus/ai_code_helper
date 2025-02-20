@@ -23,6 +23,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
     private static final Icon SEND_ICON = AllIcons.Actions.Execute;
@@ -75,7 +77,9 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
         private static final int MAX_ROWS = 10; // 最大行数 (b)
 
-        private static final int RESPONSE_TIMEOUT_MS = 30000; // 30秒超时
+        private static final int UPDATE_INTERVAL_MS = 200; // 每200ms更新一次 UI
+        private final Timer updateTimer;
+        private volatile boolean needsUpdate = false;
 
         public ChatWindow(Project project) {
             this.project = project;
@@ -138,11 +142,25 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                         adjustInputHeight();
                         messageContainer.revalidate();
                         messageContainer.repaint();
-                        // 仅更新布局，不直接重绘每个气泡
                     });
                 }
             });
 
+            // 初始化更新定时器
+            updateTimer = new Timer(true);
+            updateTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    if (needsUpdate && isGenerating) {
+                        SwingUtilities.invokeLater(() -> {
+                            messageContainer.revalidate();
+                            messageContainer.repaint();
+                            scrollToBottom();
+                            needsUpdate = false;
+                        });
+                    }
+                }
+            }, 0, UPDATE_INTERVAL_MS);
         }
 
         public static ChatWindow getInstance(Project project) {
@@ -303,17 +321,13 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                             }else{
                                 bubble.updateText(contentBuilder.toString());
                             }
-                            messageContainer.revalidate();
-                            messageContainer.repaint();
-                            scrollToBottom();
+                            needsUpdate = true;
                         }),
                         reasoning -> {
                             if (!Objects.equals(reasoning, "null") && !Objects.equals(reasoning, "")){
                                 contentResBuilder.append(reasoning);
                                 bubble.updateText(contentResBuilder.toString());
-                                messageContainer.revalidate();
-                                messageContainer.repaint();
-                                scrollToBottom();
+                                needsUpdate = true;
                             }
                         }, // 可选处理推理内容
                         error -> SwingUtilities.invokeLater(() -> {

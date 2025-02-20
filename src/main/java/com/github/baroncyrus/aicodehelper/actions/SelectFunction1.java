@@ -64,7 +64,7 @@ public class SelectFunction1 extends AnAction {
         }
 
         // 动态构造提示
-        String questionString = "Explain Code: ```" + language + "\n" + selectedText + "\n```";
+        String questionString = "Explain Code: \n```" + language + "\n" + selectedText + "\n```";
 
         // 显示工具窗口
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("AICodeAssist");
