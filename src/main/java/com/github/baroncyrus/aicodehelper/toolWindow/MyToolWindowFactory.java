@@ -118,9 +118,10 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 @Override
                 public void componentResized(ComponentEvent e) {
                     SwingUtilities.invokeLater(() -> {
+                        adjustInputHeight();
                         messageContainer.revalidate();
                         messageContainer.repaint();
-                        adjustInputHeight(); // 窗口大小变化时也调整输入框
+                        // 仅更新布局，不直接重绘每个气泡
                     });
                 }
             });
@@ -146,16 +147,13 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 int requiredRows = getRowsForText(inputArea.getText(), availableWidth);
                 int displayRows = Math.min(Math.max(requiredRows, MIN_ROWS), MAX_ROWS);
 
-                // 设置 inputArea 的首选高度为实际所需高度
                 int contentHeight = requiredRows * rowHeight;
                 inputArea.setPreferredSize(new Dimension(availableWidth, contentHeight));
 
-                // 设置 inputWrapper 的显示高度，限制在 MAX_ROWS
                 int displayHeight = displayRows * rowHeight;
                 inputWrapper.setPreferredSize(new Dimension(availableWidth, displayHeight));
                 inputWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, displayHeight));
 
-                // 控制滚动条显示
                 if (requiredRows > MAX_ROWS) {
                     inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
                 } else {
@@ -174,7 +172,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             if (text.isEmpty()) return 1;
             FontMetrics fm = inputArea.getFontMetrics(inputArea.getFont());
             int lineHeight = fm.getHeight();
-            int availableWidth = width - 10; // 留出边距
+            int availableWidth = width - 10;
             int totalHeight = 0;
 
             String[] lines = text.split("\n");
@@ -199,7 +197,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             sendButton.setEnabled(false);
 
 
-            addMessage("AI Code Assistant", "你的代码非常的棒！加油", false);
+            addMessage("AI Code Assistant", "你的代码非常的棒！\n加油", false);
             inputArea.setText("");
             sendButton.setIcon(SEND_ICON);
             sendButton.setEnabled(true);
@@ -212,7 +210,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 return;
             }
 
-            MessageBubble bubble = new MessageBubble(sender, content, isUser, messageContainer.getWidth());
+            MessageBubble bubble = new MessageBubble(sender, content, isUser, messageContainer);
             messageContainer.add(bubble);
             messageContainer.revalidate();
             messageContainer.repaint();
@@ -226,20 +224,19 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 return;
             }
 
-            MessageBubble bubble = new MessageBubble(sender, "", false, messageContainer.getWidth());
+            MessageBubble bubble = new MessageBubble(sender, "", false, messageContainer);
             messageContainer.add(bubble);
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
 
-            // 使用 SwingWorker 实现流式输出
             new SwingWorker<Void, Character>() {
                 @Override
                 protected Void doInBackground() {
                     for (char c : content.toCharArray()) {
                         publish(c);
                         try {
-                            Thread.sleep(100); // 模拟延迟
+                            Thread.sleep(100);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -261,7 +258,6 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             }.execute();
         }
 
-        // 清空所有消息
         public void clearMessages() {
             if (!SwingUtilities.isEventDispatchThread()) {
                 SwingUtilities.invokeLater(this::clearMessages);
@@ -272,8 +268,6 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             messageContainer.repaint();
         }
 
-
-        // 滚动到底部
         private void scrollToBottom() {
             SwingUtilities.invokeLater(() -> {
                 JScrollBar vertical = messageScrollPane.getVerticalScrollBar();

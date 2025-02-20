@@ -5,12 +5,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class MessageBubble extends JPanel {
-
     private final JTextPane contentPane;
-    private final int maxWidth;
+    private final JPanel parentContainer; // 用于获取父容器宽度
 
-    public MessageBubble(String sender, String content, boolean isUser, int parentWidth) {
-        this.maxWidth = Math.max(parentWidth - 50, 200); // 动态最大宽度
+    public MessageBubble(String sender, String content, boolean isUser, JPanel parentContainer) {
+        this.parentContainer = parentContainer;
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(5, 5, 5, 5),
@@ -36,18 +35,19 @@ public class MessageBubble extends JPanel {
         updateText(content);
 
         add(contentPane, BorderLayout.CENTER);
-        setMaximumSize(new Dimension(maxWidth, Short.MAX_VALUE));
     }
 
     // 更新文本内容
     public void updateText(String content) {
+        // 动态计算当前宽度，基于父容器
+        int currentMaxWidth = Math.max(parentContainer.getWidth() - 50, 200); // 减去边距，确保最小宽度
         String css = "<style>" +
-                "body { margin:0; padding:0; word-wrap:break-word; white-space:pre-wrap; max-width:" + maxWidth + "px; }" +
+                "body { margin:0; padding:0; overflow-wrap:break-word; word-wrap:break-word; white-space:pre-wrap; max-width:" + currentMaxWidth + "px; }" +
                 ".code-block { background:#F5F5F5; padding:5px; border-radius:4px; margin:3px 0; overflow-x:auto; }" +
                 ".code-block pre { margin:0; padding:5px 8px; white-space:pre; }" +
                 "</style>";
 
-        // 先将普通文本中的换行符转换为 <br>，然后处理代码块
+        // 处理换行符，普通文本依赖 CSS 换行，代码块保持原始格式
         String processedContent = content.replaceAll("\n", "<br>");
         processedContent = processedContent.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```",
                 "<div class='code-block'><pre>$3</pre></div>");
