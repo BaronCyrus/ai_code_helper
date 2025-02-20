@@ -39,7 +39,7 @@ public class Constants {
     public static final String VolcanoEngine = "VolcanoEngine(Model Hub)";//火山引擎 字节跳动旗下
     public static final String Grok = "Grok";
 
-    public static final String[] LLM_CLIENTS = {DeepSeek, SiliconFlow,VolcanoEngine, Gemini, OpenAI_API,Grok};
+    public static final String[] LLM_CLIENTS = {DeepSeek,Gemini,OpenAI_API,Grok,SiliconFlow,VolcanoEngine};
 
     public static final Map<String, String[]> CLIENT_MODULES = new HashMap<>() {
         {

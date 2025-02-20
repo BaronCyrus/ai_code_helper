@@ -1,101 +1,126 @@
 package com.github.baroncyrus.aicodehelper.toolWindow;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.text.Element;
-import javax.swing.text.View;
-import javax.swing.text.html.HTMLDocument;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.concurrent.CompletableFuture;
+import java.util.Collections;
 
 public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
     private static final Icon SEND_ICON = AllIcons.Actions.Execute;
     private static final Icon LOADING_ICON = AllIcons.Process.Step_passive;
+    private static final Icon CLEAR_ICON = AllIcons.Actions.GC;
 
     private static ChatWindow myWindow;
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         ChatWindow.getInstance(project);
+
+        // 添加清空按钮到标题栏
+        AnAction clearAction = new AnAction("Clear Messages", "Clear all chat messages", CLEAR_ICON) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                myWindow.clearMessages();
+            }
+        };
+        toolWindow.setTitleActions(Collections.singletonList(clearAction));
+
         ContentFactory contentFactory = ContentFactory.getInstance();
         Content content = contentFactory.createContent(myWindow.getPanel(), "", false);
         toolWindow.getContentManager().addContent(content);
     }
 
     public static class ChatWindow {
+
         private final JPanel panel;
         private final JTextArea inputArea;
         private final JButton sendButton;
         private final JPanel messageContainer;
         private final Project project;
-        private JBScrollPane messageScrollPane;
+        private final JBScrollPane messageScrollPane;
+        private JBScrollPane inputScrollPane;
 
+        // 输入框高度设置
+        private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
+        private static final int MAX_ROWS = 10; // 最大行数 (b)
 
         public ChatWindow(Project project) {
             this.project = project;
             panel = new JPanel(new BorderLayout());
 
-            // 消息显示区域
-            messageContainer = new JPanel();
-            // 修改 messageContainer 的布局为 BoxLayout
-            messageContainer.setLayout(new BoxLayout(messageContainer, BoxLayout.Y_AXIS));
-            messageContainer.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-
-
+            // 消息显示区域，使用自定义 VerticalFlowLayout
+            messageContainer = new JPanel(new VerticalFlowLayout(FlowLayout.LEFT, 5, 5));
             messageScrollPane = new JBScrollPane(messageContainer);
             messageScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             messageScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-            messageScrollPane.getVerticalScrollBar().setUnitIncrement(16);//平滑移动
-
+            messageScrollPane.getVerticalScrollBar().setUnitIncrement(16); // 平滑滚动
             panel.add(messageScrollPane, BorderLayout.CENTER);
+
 
             // 输入区域
             JPanel inputPanel = new JPanel(new BorderLayout());
-            inputArea = new JTextArea(3, 20);
+            inputArea = new JTextArea(MIN_ROWS, 20);
             inputArea.setLineWrap(true);
             inputArea.setWrapStyleWord(true);
+
+            // 动态调整输入框高度
+            inputScrollPane = new JBScrollPane(inputArea);
+            inputScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            inputScrollPane.setBorder(BorderFactory.createEmptyBorder()); // 移除默认边框美化
+            adjustInputHeight();
+
+            inputArea.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    adjustInputHeight();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    adjustInputHeight();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    adjustInputHeight();
+                }
+            });
+
 
 
             sendButton = new JButton(SEND_ICON);
             sendButton.addActionListener(e -> sendMessage());
-            inputPanel.add(new JScrollPane(inputArea), BorderLayout.CENTER);
+            inputPanel.add(inputScrollPane, BorderLayout.CENTER);
             inputPanel.add(sendButton, BorderLayout.EAST);
-
             panel.add(inputPanel, BorderLayout.SOUTH);
 
-            // 添加窗口尺寸监听（构造器中）
+            // 窗口大小变化监听
             panel.addComponentListener(new ComponentAdapter() {
-                private int lastWidth = -1;
-
                 @Override
                 public void componentResized(ComponentEvent e) {
-                    if (panel.getWidth() != lastWidth) {
-                        lastWidth = panel.getWidth();
-                        updateAllMessageWidths();
+                    SwingUtilities.invokeLater(() -> {
                         messageContainer.revalidate();
                         messageContainer.repaint();
-                    }
+                    });
                 }
             });
+
         }
 
         public static ChatWindow getInstance(Project project) {
@@ -108,6 +133,26 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         public JPanel getPanel() {
             return panel;
         }
+
+        // 调整输入框高度
+        private void adjustInputHeight() {
+            SwingUtilities.invokeLater(() -> {
+                int lineCount = inputArea.getLineCount();
+                int newRows = Math.min(Math.max(lineCount, MIN_ROWS), MAX_ROWS);
+                inputArea.setRows(newRows);
+
+                // 如果达到最大行数，启用滚动条
+                if (lineCount > MAX_ROWS) {
+                    inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+                } else {
+                    inputScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+                }
+
+                inputScrollPane.revalidate();
+                inputScrollPane.repaint();
+            });
+        }
+
 
         private void sendMessage() {
             String message = inputArea.getText().trim();
@@ -125,208 +170,80 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             sendButton.setIcon(SEND_ICON);
             sendButton.setEnabled(true);
 
-            // 调用OpenAI API（示例代码）
-//            CompletableFuture.runAsync(() -> {
-//                try {
-//                    OpenAIClient client = new OpenAIClient();
-//                    client.streamingChat(message, chunk -> {
-//                        // 在EDT线程更新UI
-//                        SwingUtilities.invokeLater(() -> {
-//                            updateAssistantMessage(chunk.getContent());
-//                        });
-//                    });
-//                } finally {
-//                    SwingUtilities.invokeLater(() -> {
-//                        sendButton.setIcon(SEND_ICON);
-//                        sendButton.setEnabled(true);
-//                    });
-//                }
-//            });
         }
 
         public void addMessage(String sender, String content, boolean isUser) {
-            System.out.println("addMessage: " + content);
             if (!SwingUtilities.isEventDispatchThread()) {
                 SwingUtilities.invokeLater(() -> addMessage(sender, content, isUser));
                 return;
             }
 
-            JPanel messagePanel = new JPanel();
-            messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.Y_AXIS));
-            messagePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), BorderFactory.createMatteBorder(0, 3, 0, 0, isUser ? JBColor.yellow : JBColor.GRAY)));
-            messagePanel.setBackground(isUser ? new JBColor(new Color(0xDBE8FF), new Color(0x2B5278)) :new JBColor(new Color(0xFFFFFF), new Color(0x3C3F41)));
-
-            // 同步调整边框颜色（可选）
-            Border borderColor = BorderFactory.createMatteBorder(0, 0, 0, 0, JBColor.WHITE); // 浅灰/深灰
-            messagePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5), borderColor));
-
-
-            // 消息头
-            JLabel senderLabel = new JLabel(sender);
-            senderLabel.setHorizontalAlignment(SwingConstants.LEFT);
-            senderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            senderLabel.setFont(senderLabel.getFont().deriveFont(Font.BOLD).deriveFont(14f));
-            senderLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-            senderLabel.setForeground(isUser ? new JBColor(new Color(0x2B5278), new Color(0x8CACD6)) : new JBColor(new Color(0x616161), new Color(0xBBBBBB)));
-
-            // 内容面板
-            JTextPane contentPane = new JTextPane() {
-                private int maxContentWidth = calculateMaxContentWidth();
-
-                @Override
-                public Dimension getPreferredSize() {
-                    // 计算纯文本宽度
-                    String plainText = getText().replaceAll("<[^>]+>", "");
-                    FontMetrics fm = getFontMetrics(getFont());
-                    int textWidth = fm.stringWidth(plainText) + 20; // 增加边距
-                    int actualWidth = Math.min(textWidth, maxContentWidth);
-
-                    // 计算精确高度
-                    View rootView = getUI().getRootView(this);
-                    rootView.setSize(actualWidth, Integer.MAX_VALUE);
-                    float height = rootView.getPreferredSpan(View.Y_AXIS);
-
-                    return new Dimension(actualWidth, (int) Math.ceil(height));
-                }
-
-                @Override
-                public void setBounds(int x, int y, int width, int height) {
-                    // 确保宽度不超过最大限制
-                    super.setBounds(x, y, Math.min(width, maxContentWidth), height);
-                }
-            };
-            contentPane.setContentType("text/html");
-            contentPane.setEditable(false);
-            contentPane.setOpaque(false);
-            contentPane.setBackground(null);
-            contentPane.putClientProperty(JTextPane.HONOR_DISPLAY_PROPERTIES, true);
-
-            // 动态CSS
-            String fontFamily = contentPane.getFont().getName().replaceAll("'", "''");
-            String css = "<style>"
-                    + "body {"
-                    + "  margin:0; padding:0;"
-                    + "  word-wrap:break-word !important;"
-                    + "  white-space:pre-wrap !important;"
-                    + "  width: 100% !important;"          // 新增宽度限制
-                    + "  max-width:" + calculateMaxWidth() + "px !important;"
-                    + "  font-family:'" + fontFamily + "', sans-serif;"
-                    + "  font-size:" + contentPane.getFont().getSize() + "px;"
-                    + "}"
-                    + ".lang-label {"
-                    + "  background: #e0e0e0;"
-                    + "  color: #666;"
-                    + "  padding: 2px 8px;"
-                    + "  border-radius: 4px 4px 0 0;"
-                    + "  font-size: 0.8em;"
-                    + "  font-family: monospace;"
-                    + "  display: none;"
-                    + "}"
-                    + ".lang-label:not(:empty) { display: block; }"
-                    + ".code-block {"
-                    + "  background:#F5F5F5;"
-                    + "  padding:5px 0;"
-                    + "  border-radius:4px;"
-                    + "  margin:3px 0;"
-                    + "  overflow-x:auto;"
-                    + "}"
-                    + ".code-block pre {"
-                    + "  margin:0;"
-                    + "  padding:5px 8px;"
-                    + "  white-space:pre;"
-                    + "}"
-                    + "</style>";
-
-            // 处理代码块
-            String processed = content.replaceAll("```(\\s*(\\w+)\\s*\\n)?([\\s\\S]*?)```","<div class='code-block'><div class='lang-label'>$2</div><pre>$3</pre></div>");
-            contentPane.setText("<html>" + css + "<body>" + processed + "</body></html>");
-
-
-            // 添加组件
-            messagePanel.add(senderLabel);
-            messagePanel.add(contentPane);
-
-            // 添加到容器
-            messageContainer.add(messagePanel);
-            messageContainer.add(Box.createVerticalStrut(10));
-
-            // 触发更新
+            MessageBubble bubble = new MessageBubble(sender, content, isUser, messageContainer.getWidth());
+            messageContainer.add(bubble);
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
         }
 
-        private int calculateMaxContentWidth() {
-            int panelWidth = panel.getWidth();
-            return panelWidth > 0 ? (int) (panelWidth * 0.7) : 400; // 70%面板宽度
-        }
-
-
-        // 新增宽度计算方法
-        private int calculateMaxWidth() {
-            int panelWidth = panel.getWidth();
-            if (panelWidth == 0) {
-                return 600; // 初始默认宽度
+        // 添加流式消息
+        private void addStreamingMessage(String sender, String content) {
+            if (!SwingUtilities.isEventDispatchThread()) {
+                SwingUtilities.invokeLater(() -> addStreamingMessage(sender, content));
+                return;
             }
-            return Math.max(panelWidth - 50, 200); // 确保最小宽度200px
-        }
 
-        // 新增消息宽度更新方法
-        private void updateAllMessageWidths() {
-            for (Component comp : messageContainer.getComponents()) {
-                if (comp instanceof JPanel) {
-                    Component[] children = ((JPanel) comp).getComponents();
-                    for (Component child : children) {
-                        if (child instanceof JTextPane) {
-                            JTextPane pane = (JTextPane) child;
-                            pane.setMaximumSize(new Dimension(calculateMaxContentWidth(),pane.getHeight()));
-                            pane.revalidate();
-                            updateTextPaneWidth(pane);
+            MessageBubble bubble = new MessageBubble(sender, "", false, messageContainer.getWidth());
+            messageContainer.add(bubble);
+            messageContainer.revalidate();
+            messageContainer.repaint();
+            scrollToBottom();
+
+            // 使用 SwingWorker 实现流式输出
+            new SwingWorker<Void, Character>() {
+                @Override
+                protected Void doInBackground() {
+                    for (char c : content.toCharArray()) {
+                        publish(c);
+                        try {
+                            Thread.sleep(100); // 模拟延迟
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
+                    return null;
                 }
+
+                @Override
+                protected void process(java.util.List<Character> chunks) {
+                    StringBuilder sb = new StringBuilder(bubble.getText());
+                    for (char c : chunks) {
+                        sb.append(c);
+                    }
+                    bubble.updateText(sb.toString());
+                    messageContainer.revalidate();
+                    messageContainer.repaint();
+                    scrollToBottom();
+                }
+            }.execute();
+        }
+
+        // 清空所有消息
+        public void clearMessages() {
+            if (!SwingUtilities.isEventDispatchThread()) {
+                SwingUtilities.invokeLater(this::clearMessages);
+                return;
             }
+            messageContainer.removeAll();
+            messageContainer.revalidate();
+            messageContainer.repaint();
         }
 
-        private void updateTextPaneWidth(JTextPane pane) {
-            int width = calculateMaxWidth();
 
-            // 强制父容器宽度
-            JPanel messagePanel = (JPanel) pane.getParent();
-            messagePanel.setMaximumSize(new Dimension(width, Short.MAX_VALUE));
-            messagePanel.setPreferredSize(new Dimension(width, messagePanel.getPreferredSize().height));
-
-
-            pane.setSize(width, pane.getHeight()); // 显式设置尺寸
-            pane.setPreferredSize(new Dimension(width, pane.getPreferredSize().height));
-
-            HTMLDocument doc = (HTMLDocument) pane.getDocument();
-            doc.getStyleSheet().addRule(
-                    "body { " +
-                            "   max-width: " + width + "px !important;" +
-                            "   width: " + width + "px !important;" + // 新增强制宽度
-                            "}"
-            );
-
-            // 强制刷新内容
-            String text = pane.getText();
-            pane.setText("");  // 清空内容强制样式重置
-            pane.setText(text);
-
-            // 重新计算布局
-            pane.invalidate();
-            pane.revalidate();
-            pane.repaint();
-        }
-
-        // 在scrollToBottom方法中添加异步滚动
+        // 滚动到底部
         private void scrollToBottom() {
             SwingUtilities.invokeLater(() -> {
                 JScrollBar vertical = messageScrollPane.getVerticalScrollBar();
                 vertical.setValue(vertical.getMaximum());
-                messageScrollPane.revalidate();
-                messageScrollPane.repaint();
             });
         }
 
