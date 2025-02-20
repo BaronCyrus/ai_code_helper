@@ -34,6 +34,10 @@ public class CommitMessageService {
         aiService.generateCommitMessageStream(prompt, onContent,onReasoning,onError,finishCallBack);
     }
 
+    public void generateCommitMessageStreamWithoutPrompt(String questionString, Consumer<String> onContent,Consumer<String> onReasoning, Consumer<Throwable> onError,Runnable finishCallBack) throws Exception {
+        aiService.generateCommitMessageStream(questionString, onContent,onReasoning,onError,finishCallBack);
+    }
+
     public boolean generateByStream() {
         return aiService.generateByStream();
     }

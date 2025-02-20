@@ -1,10 +1,13 @@
 package com.github.baroncyrus.aicodehelper.toolWindow;
 
+import com.github.baroncyrus.aicodehelper.services.CommitMessageService;
+import com.github.baroncyrus.aicodehelper.settings.ApiKeySettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -19,6 +22,7 @@ import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Collections;
+import java.util.Objects;
 
 public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
     private static final Icon SEND_ICON = AllIcons.Actions.Execute;
@@ -35,7 +39,17 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         AnAction clearAction = new AnAction("Clear Messages", "Clear all chat messages", CLEAR_ICON) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                myWindow.clearMessages();
+                // 添加二次确认弹窗
+                int result = Messages.showYesNoDialog(
+                        "Are you sure you want to clear all messages?", // 提示信息
+                        "Confirm Clear",                        // 对话框标题
+                        "Yes", "No",                            // 自定义按钮文本（确认/取消）
+                        Messages.getQuestionIcon()              // 图标
+                );
+                if (result == Messages.YES) { // 用户点击“确认”（Yes）
+                    myWindow.clearMessages();
+                }
+                // 如果点击“No”或关闭对话框，则不执行任何操作
             }
         };
         toolWindow.setTitleActions(Collections.singletonList(clearAction));
@@ -55,13 +69,18 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final JBScrollPane messageScrollPane;
         private JBScrollPane inputScrollPane;
         private JPanel inputWrapper; // 新增包装面板
+        private final CommitMessageService commitMessageService; // 添加 AI 服务
+        private volatile boolean isGenerating = false; // 标记是否正在生成回答
 
         // 输入框高度设置
         private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
         private static final int MAX_ROWS = 10; // 最大行数 (b)
 
+        private static final int RESPONSE_TIMEOUT_MS = 30000; // 30秒超时
+
         public ChatWindow(Project project) {
             this.project = project;
+            this.commitMessageService = new CommitMessageService(); // 初始化 AI 服务
             panel = new JPanel(new BorderLayout());
 
             // 消息显示区域，使用自定义 VerticalFlowLayout
@@ -186,7 +205,38 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         }
 
 
+        public void sendMessageBySelectFunction(String questionMessage){
+            if (isGenerating) {
+                System.out.println("Please wait for the current AI response to complete.");
+                return; // 如果正在生成回答，阻止新消息发送
+            }
+
+            if (questionMessage.isEmpty()) return;
+
+            // 添加用户消息
+            addMessage("Me", questionMessage, true);
+
+            inputArea.setText("");
+            sendButton.setIcon(LOADING_ICON);
+            sendButton.setEnabled(false);
+            isGenerating = true; // 设置生成标志
+
+            // 在后台线程中调用 AI 流式回答，避免卡死
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    addStreamingMessage("AI Code Assistant", questionMessage);
+                    return null;
+                }
+            }.execute();
+        }
+
         private void sendMessage() {
+            if (isGenerating) {
+                System.out.println("Please wait for the current AI response to complete.");
+                return; // 如果正在生成回答，阻止新消息发送
+            }
+
             String message = inputArea.getText().trim();
             if (message.isEmpty()) return;
 
@@ -195,13 +245,17 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             inputArea.setText("");
             sendButton.setIcon(LOADING_ICON);
             sendButton.setEnabled(false);
+            isGenerating = true; // 设置生成标志
 
 
-            addMessage("AI Code Assistant", "你的代码非常的棒！\n加油", false);
-            inputArea.setText("");
-            sendButton.setIcon(SEND_ICON);
-            sendButton.setEnabled(true);
-
+            // 在后台线程中调用 AI 流式回答，避免卡死
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    addStreamingMessage("AI Code Assistant", message);
+                    return null;
+                }
+            }.execute();
         }
 
         public void addMessage(String sender, String content, boolean isUser) {
@@ -217,45 +271,77 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             scrollToBottom();
         }
 
-        // 添加流式消息
-        private void addStreamingMessage(String sender, String content) {
-            if (!SwingUtilities.isEventDispatchThread()) {
-                SwingUtilities.invokeLater(() -> addStreamingMessage(sender, content));
-                return;
-            }
+        private final StringBuilder contentBuilder = new StringBuilder();
+        private final StringBuilder contentResBuilder = new StringBuilder();
+        // 添加流式消息，使用 DeepSeek API
+        private void addStreamingMessage(String sender, String userMessage) {
+            ApiKeySettings settings = ApiKeySettings.getInstance();
+            var promptContent = "Reply in {language}.";
+            promptContent = promptContent.replace("{language}", settings.getCommitLanguage());
+            //内置语言prompt
+            userMessage = promptContent + userMessage;
 
+            contentBuilder.setLength(0);//清理
+            contentResBuilder.setLength(0);
+            contentResBuilder.append("think start\n");
+            inputArea.setText("Generating Answer...");//设置正在生成
             MessageBubble bubble = new MessageBubble(sender, "", false, messageContainer);
-            messageContainer.add(bubble);
+            SwingUtilities.invokeLater(() -> {
+                messageContainer.add(bubble);
+                messageContainer.revalidate();
+                messageContainer.repaint();
+                scrollToBottom();
+            });
+
+            try {
+
+                commitMessageService.generateCommitMessageStreamWithoutPrompt(
+                        userMessage,
+                        token -> SwingUtilities.invokeLater(() -> {
+                            contentBuilder.append(token);
+                            if (contentResBuilder.length() > 100){
+                                bubble.updateText(contentResBuilder + "\nthink end" + contentBuilder);
+                            }else{
+                                bubble.updateText(contentBuilder.toString());
+                            }
+                            messageContainer.revalidate();
+                            messageContainer.repaint();
+                            scrollToBottom();
+                        }),
+                        reasoning -> {
+                            if (!Objects.equals(reasoning, "null") && !Objects.equals(reasoning, "")){
+                                contentResBuilder.append(reasoning);
+                                bubble.updateText(contentResBuilder.toString());
+                                messageContainer.revalidate();
+                                messageContainer.repaint();
+                                scrollToBottom();
+                            }
+                        }, // 可选处理推理内容
+                        error -> SwingUtilities.invokeLater(() -> {
+                            addMessage("System", "Error: " + error.getMessage(), false);
+                            finishGeneration();
+                        }),
+                        () -> {
+                            SwingUtilities.invokeLater(this::finishGeneration);
+                        }
+                );
+            } catch (Exception ex) {
+                SwingUtilities.invokeLater(() -> {
+                    addMessage("System", "Error generating response: " + ex.getMessage(), false);
+                    finishGeneration();
+                });
+            }
+        }
+
+        // 完成生成后的处理
+        private void finishGeneration() {
+            sendButton.setIcon(SEND_ICON);
+            sendButton.setEnabled(true); // 恢复发送按钮
+            isGenerating = false; // 重置生成标志
+            inputArea.setText("");
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
-
-            new SwingWorker<Void, Character>() {
-                @Override
-                protected Void doInBackground() {
-                    for (char c : content.toCharArray()) {
-                        publish(c);
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    return null;
-                }
-
-                @Override
-                protected void process(java.util.List<Character> chunks) {
-                    StringBuilder sb = new StringBuilder(bubble.getText());
-                    for (char c : chunks) {
-                        sb.append(c);
-                    }
-                    bubble.updateText(sb.toString());
-                    messageContainer.revalidate();
-                    messageContainer.repaint();
-                    scrollToBottom();
-                }
-            }.execute();
         }
 
         public void clearMessages() {
@@ -275,5 +361,9 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             });
         }
 
+        // 检查是否正在生成回答
+        public boolean isGenerating() {
+            return isGenerating;
+        }
     }
 }
