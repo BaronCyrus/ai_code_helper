@@ -41,6 +41,24 @@ public class Constants {
 
     public static final String[] LLM_CLIENTS = {DeepSeek,Gemini,OpenAI_API,Grok,SiliconFlow,VolcanoEngine};
 
+    // 文件后缀到语言标记的映射表
+    public static final Map<String, String> LANGUAGE_MAP = new HashMap<>(){
+        {
+            put("cs", "csharp");
+            put("java", "java");
+            put("py", "python");
+            put("cpp", "cpp");
+            put("c", "c");
+            put("js", "javascript");
+            put("ts", "typescript");
+            put("rb", "ruby");
+            put("php", "php");
+            put("go", "go");
+            put("kt", "kotlin");
+        }
+    };
+
+
     public static final Map<String, String[]> CLIENT_MODULES = new HashMap<>() {
         {
             put(DeepSeek, new String[]{"deepseek-chat","deepseek-reasoner"});

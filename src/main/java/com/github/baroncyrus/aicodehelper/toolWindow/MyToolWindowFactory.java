@@ -69,7 +69,6 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final JBScrollPane messageScrollPane;
         private JBScrollPane inputScrollPane;
         private JPanel inputWrapper; // 新增包装面板
-        private final CommitMessageService commitMessageService; // 添加 AI 服务
         private volatile boolean isGenerating = false; // 标记是否正在生成回答
 
         // 输入框高度设置
@@ -80,7 +79,6 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
 
         public ChatWindow(Project project) {
             this.project = project;
-            this.commitMessageService = new CommitMessageService(); // 初始化 AI 服务
             panel = new JPanel(new BorderLayout());
 
             // 消息显示区域，使用自定义 VerticalFlowLayout
@@ -275,6 +273,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final StringBuilder contentResBuilder = new StringBuilder();
         // 添加流式消息，使用 DeepSeek API
         private void addStreamingMessage(String sender, String userMessage) {
+            var commitMessageService = new CommitMessageService();
             ApiKeySettings settings = ApiKeySettings.getInstance();
             var promptContent = "Reply in {language}.";
             promptContent = promptContent.replace("{language}", settings.getCommitLanguage());

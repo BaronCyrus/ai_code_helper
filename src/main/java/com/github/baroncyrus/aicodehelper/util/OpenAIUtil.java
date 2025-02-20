@@ -107,7 +107,6 @@ public class OpenAIUtil {
                             }
                         }
                     }else{
-                        System.out.println("本次对话结束");
                         finishCallBack.run();
                     }
                 }
