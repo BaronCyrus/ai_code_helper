@@ -1,8 +1,46 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.baroncyrus.aicodehelper</id>
-    <name>AICodeAssistant</name>
-    <vendor>baroncyrus</vendor>
+    <name>AI Code Assistant</name>
+    <vendor email="codiee.zhang@gmail.com">baroncyrus</vendor>
+
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <description>
+
+    <![CDATA[
+    <h3>This plugin will automatically generate commit messages with AI.</h3>
+    <h3>This plugin can be your code assistant. you can chat on the right window.</h3>
+
+    <h3>Supported LLM Client:</h3>
+    <ul>
+        <li>DeepSeek</li>
+        <li>OpenAI API</li>
+        <li>Gemini.</li>
+        <li>Grok</li>
+        <li>SiliconFlow(Mode Hub)</li>
+        <li>VolcanoEngine(Mode Hub)</li>
+    </ul>
+
+    <h3>Usage for auto generate commit message:</h3>
+    <ul>
+        <li>Select the code file you want to commit.</li>
+        <li>Click the "Generate AI Commit Message" button.</li>
+        <li>The generated commit message will be displayed in the commit message editor.</li>
+    </ul>
+
+    <h3>Usage for auto code suggestion:</h3>
+    <ul>
+        <li>Select the code you want to analyze.</li>
+        <li>Right click and chose a function (explain code or refactor code or find bugs).</li>
+        <li>The generated message will be displayed on the right tool window.</li>
+    </ul>
+
+
+    ]]>
+    </description>
+
 
     <depends>com.intellij.modules.platform</depends>
     <depends>Git4Idea</depends>
