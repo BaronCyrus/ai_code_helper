@@ -71,7 +71,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final JBScrollPane messageScrollPane;
         private JBScrollPane inputScrollPane;
         private JPanel inputWrapper; // 新增包装面板
-        private volatile boolean isGenerating = false; // 标记是否正在生成回答
+        public volatile boolean isGenerating = false; // 标记是否正在生成回答
 
         // 输入框高度设置
         private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
@@ -247,6 +247,34 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
                 }
             }.execute();
         }
+
+
+        public void sendMessageBySelectDiffFiles(String questionMessage){
+            if (isGenerating) {
+                System.out.println("Please wait for the current AI response to complete.");
+                return; // 如果正在生成回答，阻止新消息发送
+            }
+
+            if (questionMessage.isEmpty()) return;
+
+            // 添加用户消息
+            addMessage("Me", "Please Help Me Code Review These Diff Files", true);
+
+            inputArea.setText("");
+            sendButton.setIcon(LOADING_ICON);
+            sendButton.setEnabled(false);
+            isGenerating = true; // 设置生成标志
+
+            // 在后台线程中调用 AI 流式回答，避免卡死
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    addStreamingMessage("AI Code Assistant", questionMessage);
+                    return null;
+                }
+            }.execute();
+        }
+
 
         private void sendMessage() {
             if (isGenerating) {
