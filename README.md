@@ -1,34 +1,45 @@
-# ai_code_helper
+# AI Code Assistant
 
 ![Build](https://github.com/BaronCyrus/ai_code_helper/workflows/Build/badge.svg)
 [![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [pluginGroup](./gradle.properties) and [pluginName](./gradle.properties), as well as the [id](./src/main/resources/META-INF/plugin.xml) and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin description in `README` (see [Tips][docs:plugin-description])
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
 
 <!-- Plugin description -->
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+This plugin will automatically generate commit messages with AI.
+This plugin can be your code assistant. you can chat on the right window.
 
-This specific section is a source for the [plugin.xml](/src/main/resources/META-INF/plugin.xml) file which will be extracted by the [Gradle](/build.gradle.kts) during the build process.
+<h3>Supported LLM Client:</h3>
+<li>DeepSeek</li>
+<li>OpenAI API</li>
+<li>Gemini.</li>
+<li>Grok</li>
+<li>SiliconFlow(Mode Hub)</li>
+<li>VolcanoEngine(Mode Hub)</li>
 
-To keep everything working, do not remove `<!-- ... -->` sections. 
+<h3>Usage for auto generate commit message:</h3>
+<li>Select the code file you want to commit.</li>
+<li>Click the "Generate AI Commit Message" button.</li>
+<li>The generated commit message will be displayed in the commit message editor.</li>
+
+<h3>Usage for auto diff code review:</h3>
+<li>Select the code file you want to review by ai.</li>
+<li>Click the "Generate AI Code Review" button.</li>
+<li>The generated commit message will be displayed in the right tool window.</li>
+
+
+<h3>Usage for auto code suggestion:</h3>
+<li>Select the code you want to analyze.</li>
+<li>Right click and chose a function (explain code or refactor code or find bugs).</li>
+<li>The generated message will be displayed in the right tool window.</li>
+
 <!-- Plugin description end -->
 
 ## Installation
 
 - Using the IDE built-in plugin system:
   
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "ai_code_helper"</kbd> >
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "AI Code Assistant"</kbd> >
   <kbd>Install</kbd>
   
 - Using JetBrains Marketplace:

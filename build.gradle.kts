@@ -94,13 +94,13 @@ intellijPlatform {
         //privateKey = providers.environmentVariable("PRIVATE_KEY")
         //password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
 
-        certificateChain = providers.fileContents(layout.projectDirectory.file("E:/pluginKeys/certificate.pem")).asText
-        privateKey = providers.fileContents(layout.projectDirectory.file("E:/pluginKeys/private.pem")).asText
+        certificateChain = providers.fileContents(layout.projectDirectory.file("D:/pluginKeys/certificate.pem")).asText
+        privateKey = providers.fileContents(layout.projectDirectory.file("D:/pluginKeys/private.pem")).asText
         password = "" // 如果无密码
     }
 
     publishing {
-        token = providers.fileContents(layout.projectDirectory.file("E:/pluginKeys/publishToken")).asText
+        token = providers.fileContents(layout.projectDirectory.file("D:/pluginKeys/publishToken")).asText
         // The pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
