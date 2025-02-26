@@ -46,7 +46,7 @@ public class CommitMessageService {
     public static AIService getAIService(String selectedClient) {
         return switch (selectedClient) {
             //case Constants.Ollama -> new OllamaService();
-            //case Constants.Gemini -> new GeminiService();
+            case Constants.Gemini -> new GeminiService();
             case Constants.DeepSeek -> new DeepSeekAPIService();
             case Constants.OpenAI_API -> new OpenAIAPIService();
             //case Constants.CloudflareWorkersAI -> new CloudflareWorkersAIService();
