@@ -141,15 +141,15 @@ public class DiffCodeReviewMessageAction extends AnAction {
         if (project != null) {
             MyToolWindowFactory.ChatWindow window = MyToolWindowFactory.ChatWindow.getInstance(project);
             if (window != null) {
-                inProgress = window.isGenerating;
+                inProgress = window.isGenerating();
             }
         }
+
         e.getPresentation().setEnabled(!inProgress);
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-        // 指定在后台线程更新 Action 状态，提高性能
         return ActionUpdateThread.BGT;
     }
 

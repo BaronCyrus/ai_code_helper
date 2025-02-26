@@ -3,8 +3,8 @@ package com.github.baroncyrus.aicodehelper.toolWindow;
 import com.github.baroncyrus.aicodehelper.services.CommitMessageService;
 import com.github.baroncyrus.aicodehelper.settings.ApiKeySettings;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -71,7 +71,7 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
         private final JBScrollPane messageScrollPane;
         private JBScrollPane inputScrollPane;
         private JPanel inputWrapper; // 新增包装面板
-        public volatile boolean isGenerating = false; // 标记是否正在生成回答
+        private volatile boolean isGenerating = false; // 标记是否正在生成回答
 
         // 输入框高度设置
         private static final int MIN_ROWS = 3;  // 默认最小行数 (a)
@@ -386,6 +386,21 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
+
+            //刷新ui
+            refreshActionUI("AICommitMessage.Generate");
+            refreshActionUI("AIDiffCodeReview.Generate");
+        }
+
+        private void refreshActionUI(String actionName) {
+            ActionManager actionManager = ActionManager.getInstance();
+            AnAction action = actionManager.getAction(actionName);
+            if (action != null && project != null) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
+                    action.update(event);
+                });
+            }
         }
 
         public void clearMessages() {

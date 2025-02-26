@@ -75,7 +75,7 @@ public class Constants {
 
     public static Map<String, ApiKeySettings.ModuleConfig> moduleConfigs = new HashMap<>() {
         {
-            put(Gemini, new ApiKeySettings.ModuleConfig("https://generativelanguage.googleapis.com/v1beta/models", ""));
+            put(Gemini, new ApiKeySettings.ModuleConfig("https://generativelanguage.googleapis.com/v1/models", ""));
             put(DeepSeek, new ApiKeySettings.ModuleConfig("https://api.deepseek.com/chat/completions", ""));
             put(Ollama, new ApiKeySettings.ModuleConfig("http://localhost:11434/api/generate", ""));
             put(OpenAI_API, new ApiKeySettings.ModuleConfig("https://api.openai.com/v1/chat/completions", ""));
