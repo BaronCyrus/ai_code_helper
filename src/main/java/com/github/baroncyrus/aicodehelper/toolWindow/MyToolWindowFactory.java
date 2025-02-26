@@ -386,22 +386,8 @@ public class MyToolWindowFactory implements ToolWindowFactory, DumbAware {
             messageContainer.revalidate();
             messageContainer.repaint();
             scrollToBottom();
-
-            //刷新ui
-            refreshActionUI("AICommitMessage.Generate");
-            refreshActionUI("AIDiffCodeReview.Generate");
         }
 
-        private void refreshActionUI(String actionName) {
-            ActionManager actionManager = ActionManager.getInstance();
-            AnAction action = actionManager.getAction(actionName);
-            if (action != null && project != null) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
-                    action.update(event);
-                });
-            }
-        }
 
         public void clearMessages() {
             if (!SwingUtilities.isEventDispatchThread()) {
