@@ -43,6 +43,8 @@ public class OpenAIUtil {
         if (module.contains("gemini")){
             url = url + "/" + module + ":streamGenerateContent";
             jsonInputString = buildGoogleRequestBody(textContent);
+        }else if (module.contains("claude")) {
+            jsonInputString = buildClaudeRequestBody(module, textContent);
         }else{
             jsonInputString = buildOpenAIRequestBody(module, textContent);
         }
@@ -70,18 +72,41 @@ public class OpenAIUtil {
         return objectMapper.writeValueAsString(openAIRequestBO);
     }
 
+    private static String buildClaudeRequestBody(String model, String textContent) throws IOException {
+        // 构建Anthropic Claude模型的请求体
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", model);
+        requestBody.put("max_tokens", 1024);
+        requestBody.put("stream", true);
+
+        Map<String, String> message = new HashMap<>();
+        message.put("role", "user");
+        message.put("content", textContent);
+
+        requestBody.put("messages", List.of(message));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(requestBody);
+    }
+
 
     private static @NotNull HttpURLConnection getHttpURLConnection(String apiKey, URI uri, String jsonInputString,String model) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
         connection.setRequestMethod("POST");
-        if (!model.contains("gemini")) {
+
+        if (model.contains("gemini")) {
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("x-goog-api-key", apiKey);
+        } else if (model.contains("claude")) {
+            connection.setRequestProperty("x-api-key", apiKey);
+            connection.setRequestProperty("anthropic-version", "2023-06-01");
+            connection.setRequestProperty("Content-Type", "application/json");
+        } else {
             connection.setRequestProperty("Authorization", "Bearer " + apiKey);
             connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
             connection.setRequestProperty("Accept-Charset", "UTF-8");
-        }else{
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("x-goog-api-key", apiKey);
         }
+
         connection.setDoOutput(true);
         connection.setConnectTimeout(10000); // 连接超时：10秒
         connection.setReadTimeout(10000); // 读取超时：10秒
@@ -131,6 +156,37 @@ public class OpenAIUtil {
                 }
             }
             parser.close(); // 关闭解析器，释放资源
+        }else if (client.equals(Constants.Claude)){
+            // 处理Claude流式响应
+            String charset = getCharsetFromContentType(connection.getContentType());
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), charset))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("data: ")) {
+                        String jsonData = line.substring(6);
+                        if (!"[DONE]".equals(jsonData)) {
+                            ObjectMapper mapper = new ObjectMapper();
+                            JsonNode root = mapper.readTree(jsonData);
+                            // Claude的流式响应格式
+                            JsonNode delta = root.path("delta");
+                            String textContent1 = delta.path("text").asText();
+                            if (StringUtils.isNotEmpty(textContent1) && !textContent1.equals("null")) {
+                                onContent.accept(textContent1);
+                            }
+                            // 检查事件类型
+                            JsonNode type = root.path("type");
+                            if (type != null) {
+                                if ("content_block_delta".equals(type.asText())) {
+                                    // 继续处理内容增量，无需检查 "usage"
+                                } else if ("message_stop".equals(type.asText())) {
+                                    finishCallBack.run();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }else{
             // 获取响应的字符集
             String charset = getCharsetFromContentType(connection.getContentType());

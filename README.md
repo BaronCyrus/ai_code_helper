@@ -14,6 +14,7 @@ This plugin can be your code assistant. you can chat on the right window.
 <li>OpenAI API</li>
 <li>Gemini.</li>
 <li>Grok</li>
+<li>Claude</li>
 <li>SiliconFlow(Mode Hub)</li>
 <li>VolcanoEngine(Mode Hub)</li>
 

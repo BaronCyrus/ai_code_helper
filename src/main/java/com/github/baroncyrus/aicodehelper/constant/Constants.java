@@ -38,8 +38,9 @@ public class Constants {
     public static final String CloudflareWorkersAI = "Cloudflare Workers AI";
     public static final String VolcanoEngine = "VolcanoEngine(Model Hub)";//火山引擎 字节跳动旗下
     public static final String Grok = "Grok";
+    public static final String Claude = "Claude";
 
-    public static final String[] LLM_CLIENTS = {DeepSeek,Gemini,OpenAI_API,Grok,SiliconFlow,VolcanoEngine};
+    public static final String[] LLM_CLIENTS = {DeepSeek,Claude,Gemini,OpenAI_API,Grok,SiliconFlow,VolcanoEngine};
 
     // 文件后缀到语言标记的映射表
     public static final Map<String, String> LANGUAGE_MAP = new HashMap<>(){
@@ -70,6 +71,7 @@ public class Constants {
             put(阿里云百炼, new String[]{"qwen-plus"});
             put(VolcanoEngine,new String[]{""});
             put(Grok,new String[]{"grok-2"});
+            put(Claude,new String[]{"claude-3-7-sonnet-latest","claude-3-5-haiku-latest"});
         }
     };
 
@@ -84,6 +86,7 @@ public class Constants {
             put(CloudflareWorkersAI, new ApiKeySettings.ModuleConfig("https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1/chat/completions", ""));
             put(VolcanoEngine,new ApiKeySettings.ModuleConfig("https://ark.cn-beijing.volces.com/api/v3/chat/completions", ""));
             put(Grok,new ApiKeySettings.ModuleConfig("https://api.x.ai/v1/chat/completions", ""));
+            put(Claude,new ApiKeySettings.ModuleConfig("https://api.anthropic.com/v1/messages", ""));
         }
     };
 
@@ -97,6 +100,7 @@ public class Constants {
             put(Constants.OpenAI_API, "https://platform.openai.com/docs/overview");
             put(Constants.Grok,"https://console.x.ai");
             put(Constants.VolcanoEngine,"https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey");
+            put(Constants.Claude,"https://console.anthropic.com/settings/keys");
         }
     };
 
@@ -130,6 +134,8 @@ public class Constants {
                     "<html>Get your API key from <a href='https://console.x.ai'>" + Grok + "</a></html>";
             case VolcanoEngine ->
                     "<html>Get your API key from <a href='https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey'>" + VolcanoEngine + "</a></html>";
+            case Claude ->
+                    "<html>Get your API key from <a href='https://console.anthropic.com/settings/keys'>" + Claude + "</a></html>";
             default -> "";
         };
     }

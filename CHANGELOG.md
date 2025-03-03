@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+## [1.0.5] - 2025-03-03
+
+### Added
+
+- support Claude LLM Client
+
 ## [1.0.4] - 2025-02-26
 
 ### Fixed

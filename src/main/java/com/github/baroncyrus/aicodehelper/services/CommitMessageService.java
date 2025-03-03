@@ -53,6 +53,7 @@ public class CommitMessageService {
             case Constants.VolcanoEngine -> new VolcanoEngineService();
             case Constants.SiliconFlow -> new SiliconFlowService();
             case Constants.Grok -> new GrokService();
+            case Constants.Claude -> new ClaudeService();
             default -> throw new IllegalArgumentException("Invalid LLM client: " + selectedClient);
         };
     }
